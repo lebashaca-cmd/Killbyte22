@@ -2,6 +2,7 @@
   const form = document.getElementById("browser-form");
   const address = document.getElementById("browser-address");
   const frameElement = document.getElementById("browser-frame");
+  const browserPanel = document.querySelector(".browser-page > .box");
   const status = document.getElementById("browser-status");
   const fullscreenButton = document.getElementById("browser-fullscreen");
   const initialUrl = new URLSearchParams(window.location.search).get("url");
@@ -63,10 +64,10 @@
 
   fullscreenButton.addEventListener("click", async () => {
     try {
-      if (document.fullscreenElement === frameElement) {
+      if (document.fullscreenElement === browserPanel) {
         await document.exitFullscreen();
       } else {
-        await frameElement.requestFullscreen();
+        await browserPanel.requestFullscreen();
       }
     } catch (error) {
       console.error("Could not toggle browser fullscreen.", error);
@@ -75,7 +76,7 @@
   });
 
   const updateFullscreenLabel = () => {
-    fullscreenButton.textContent = document.fullscreenElement === frameElement
+    fullscreenButton.textContent = document.fullscreenElement === browserPanel
       ? "⛶ Exit fullscreen"
       : "⛶ Fullscreen";
   };

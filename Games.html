@@ -18,16 +18,19 @@
     </nav>
     <div class="box">
       <h1>Games</h1>
-      <div class="iframe-toolbar">
-        <button id="game-fullscreen" class="fullscreen-button" type="button">⛶ Fullscreen</button>
-      </div>
-      <iframe
-        id="game-frame"
-        src="https://ghost-mathmulti.zeoghost.workers.dev/"
-        title="Ghost Math Multi"
-        loading="lazy"
-        allowfullscreen
-      ></iframe>
+      <section id="game-stage" class="game-stage" aria-label="Game player">
+        <div class="iframe-toolbar">
+          <span class="fullscreen-title">Killbyte <span aria-hidden="true">/</span> Games</span>
+          <button id="game-fullscreen" class="fullscreen-button" type="button">⛶ Fullscreen</button>
+        </div>
+        <iframe
+          id="game-frame"
+          src="https://ghost-mathmulti.zeoghost.workers.dev/"
+          title="Ghost Math Multi"
+          loading="lazy"
+          allowfullscreen
+        ></iframe>
+      </section>
       <div class="box warning-box" id="game-warning">
         <button class="close-button" type="button" aria-label="Close warning" title="Close warning">×</button>
         <h2>Warning!</h2>
@@ -36,13 +39,14 @@
       <script>
         const gameFrame = document.getElementById("game-frame");
         const gameFullscreen = document.getElementById("game-fullscreen");
+        const gameStage = document.getElementById("game-stage");
 
         gameFullscreen.addEventListener("click", async () => {
           try {
-            if (!document.fullscreenElement) {
-              await gameFrame.requestFullscreen();
-            } else {
+            if (document.fullscreenElement === gameStage) {
               await document.exitFullscreen();
+            } else {
+              await gameStage.requestFullscreen();
             }
           } catch {
             gameFullscreen.textContent = "Fullscreen unavailable";
@@ -50,7 +54,7 @@
         });
 
         const updateFullscreenLabel = () => {
-          gameFullscreen.textContent = document.fullscreenElement === gameFrame
+          gameFullscreen.textContent = document.fullscreenElement === gameStage
             ? "⛶ Exit fullscreen"
             : "⛶ Fullscreen";
         };

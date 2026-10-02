@@ -8,6 +8,13 @@ window.initializeKillbytePageSettings = () => {
     georgia: "Georgia, serif",
     courier: '"Courier New", monospace'
   };
+  const siteFontNames = {
+    trebuchet: "Trebuchet MS",
+    arial: "Arial",
+    verdana: "Verdana",
+    georgia: "Georgia",
+    courier: "Courier New"
+  };
   const savedFont = localStorage.getItem("killbyte-site-font") || "trebuchet";
   const selectedFont = siteFonts[savedFont] ? savedFont : "trebuchet";
   root.style.setProperty("--site-font", siteFonts[selectedFont]);
@@ -15,16 +22,23 @@ window.initializeKillbytePageSettings = () => {
   if (!window.killbyteFontChangeListener) {
     window.killbyteFontChangeListener = true;
     document.addEventListener("change", (event) => {
-      if (event.target.id !== "site-font") return;
+      if (event.target.name !== "site-font") return;
       const font = siteFonts[event.target.value];
       if (!font) return;
 
       root.style.setProperty("--site-font", font);
       localStorage.setItem("killbyte-site-font", event.target.value);
+      const fontLabel = document.getElementById("site-font-label");
+      if (fontLabel) fontLabel.textContent = siteFontNames[event.target.value];
+      const fontPicker = document.getElementById("site-font-picker");
+      if (fontPicker) fontPicker.open = false;
     });
   }
-  const fontPicker = document.getElementById("site-font");
-  if (fontPicker) fontPicker.value = selectedFont;
+  const fontLabel = document.getElementById("site-font-label");
+  if (fontLabel) fontLabel.textContent = siteFontNames[selectedFont];
+  document.querySelectorAll("input[name='site-font']").forEach((option) => {
+    option.checked = option.value === selectedFont;
+  });
 
   const orbField = document.querySelector(".orb-field") || document.createElement("div");
   if (!orbField.isConnected) {

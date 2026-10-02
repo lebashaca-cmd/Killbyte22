@@ -975,7 +975,8 @@ iframe .Scrollingbox {
 }
 
 .background-theme-options label:hover,
-.background-theme-options label:has(input:checked) {
+.background-theme-options label:has(input:checked),
+.background-theme-options label:focus-within {
   background: linear-gradient(90deg, color-mix(in srgb, var(--neon-secondary) 25%, #141a35), color-mix(in srgb, var(--neon-color) 12%, #141a35));
   color: white;
   outline: 1px solid var(--neon-light);
@@ -1013,23 +1014,25 @@ iframe .Scrollingbox {
   accent-color: var(--neon-color);
 }
 
-.setting-select {
-  max-width: 52%;
-  padding: 9px 32px 9px 11px;
-  border: 1px solid var(--neon-light);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--neon-secondary) 12%, #0f0c14);
-  color: white;
-  font: inherit;
+.font-picker {
+  width: min(100%, 220px);
+  flex: 0 0 min(100%, 220px);
 }
 
-.setting-select:focus-visible {
-  outline: 2px solid var(--neon-color);
+.font-options label:has(input[value="arial"]) {
+  font-family: Arial, sans-serif;
 }
 
-.setting-select option {
-  background: #0f0c14;
-  color: white;
+.font-options label:has(input[value="verdana"]) {
+  font-family: Verdana, sans-serif;
+}
+
+.font-options label:has(input[value="georgia"]) {
+  font-family: Georgia, serif;
+}
+
+.font-options label:has(input[value="courier"]) {
+  font-family: "Courier New", monospace;
 }
 
 .media-file-row {
@@ -1130,7 +1133,9 @@ iframe {
 
 .iframe-toolbar {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-top: 16px;
 }
 
@@ -1156,12 +1161,16 @@ iframe {
   box-shadow: 0 0 16px color-mix(in srgb, var(--neon-color) 50%, transparent);
 }
 
-iframe:fullscreen {
-  width: 100vw;
-  height: 100vh;
-  margin: 0;
-  border-radius: 0;
-  background: #09090d;
+.fullscreen-title {
+  color: color-mix(in srgb, var(--neon-light) 70%, white);
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+}
+
+.fullscreen-title span {
+  margin: 0 5px;
+  color: var(--neon-color);
 }
 
 .games-page {
@@ -1186,6 +1195,21 @@ iframe:fullscreen {
   min-height: 0;
   height: auto;
   margin: 16px 0 0;
+}
+
+.game-stage {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.game-stage .iframe-toolbar {
+  margin-top: 0;
+}
+
+.game-stage iframe {
+  margin-top: 12px;
 }
 
 .games-page .warning-box {
@@ -1296,6 +1320,47 @@ iframe:fullscreen {
   border: 1px solid color-mix(in srgb, var(--neon-light) 60%, transparent);
   border-radius: 12px;
   background: white;
+}
+
+#game-stage:fullscreen,
+.browser-page > .box:fullscreen {
+  width: calc(100vw - 32px);
+  max-width: none;
+  height: calc(100vh - 32px);
+  max-height: none;
+  min-height: 0;
+  margin: auto;
+  padding: clamp(16px, 2vw, 30px);
+  overflow: hidden;
+  border: 1px solid var(--neon-light);
+  border-radius: 24px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--neon-secondary) 18%, #080914), color-mix(in srgb, var(--neon-color) 12%, #09090d));
+  box-shadow: 0 0 24px color-mix(in srgb, var(--neon-color) 34%, transparent), inset 0 0 24px color-mix(in srgb, var(--neon-secondary) 10%, transparent);
+}
+
+#game-stage:fullscreen::backdrop,
+.browser-page > .box:fullscreen::backdrop {
+  background: radial-gradient(circle at top, color-mix(in srgb, var(--neon-secondary) 22%, #09090d), #03040a 72%);
+}
+
+#game-stage:fullscreen iframe {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  margin: 12px 0 0;
+  border-radius: 16px;
+}
+
+.browser-page > .box:fullscreen h1 {
+  flex: 0 0 auto;
+}
+
+.browser-page > .box:fullscreen .browser-toolbar {
+  flex: 0 0 auto;
+}
+
+.browser-page > .box:fullscreen iframe {
+  border-radius: 16px;
 }
 
 @media (max-width: 600px) {
