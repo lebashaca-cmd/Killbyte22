@@ -39,7 +39,13 @@
     menu.replaceChildren();
     addItem("←  Go back", () => history.back());
     addItem("↻  Reload page", () => location.reload());
-    addItem("⌂  Home", () => { location.href = "index.html"; });
+    addItem("⌂  Home", () => {
+      if (window.killbyteNavigate) {
+        window.killbyteNavigate(new URL("index.html", location.href).href);
+      } else {
+        location.href = "index.html";
+      }
+    });
     if (activeLink) {
       addSeparator();
       addItem("↗  Open link in new tab", () => window.open(activeLink.href, "_blank", "noopener,noreferrer"));

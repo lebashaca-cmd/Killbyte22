@@ -12,6 +12,7 @@ const siteFiles = [
   "browser.js",
   "context-menu.js",
   "index.html",
+  "navigation.js",
   "proxy-config.js",
   "script.js",
   "settings.html",

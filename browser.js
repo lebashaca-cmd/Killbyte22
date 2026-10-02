@@ -74,11 +74,15 @@
     }
   });
 
-  document.addEventListener("fullscreenchange", () => {
+  const updateFullscreenLabel = () => {
     fullscreenButton.textContent = document.fullscreenElement === frameElement
       ? "⛶ Exit fullscreen"
       : "⛶ Fullscreen";
-  });
+  };
+  document.addEventListener("fullscreenchange", updateFullscreenLabel);
+  window.addEventListener("killbyte:beforeNavigate", () => {
+    document.removeEventListener("fullscreenchange", updateFullscreenLabel);
+  }, { once: true });
 
   frameElement.addEventListener("load", () => {
     if (frameReady) status.textContent = "Ready";

@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Page Title</title>
+    <title>Links - Killbyte</title>
     <link rel="stylesheet" href="styles.css" />
     <script src="context-menu.js" defer></script>
     <script src="site-settings.js" defer></script>
+    <script src="navigation.js" defer></script>
   </head>
   <body class="Scrollingbox">
     <nav class="page-nav" aria-label="Main navigation">
@@ -75,11 +76,15 @@
         }
       });
 
-      document.addEventListener("fullscreenchange", () => {
+      const updateFullscreenLabel = () => {
         frameFullscreen.textContent = document.fullscreenElement === siteFrame
           ? "⛶ Exit fullscreen"
           : "⛶ Fullscreen";
-      });
+      };
+      document.addEventListener("fullscreenchange", updateFullscreenLabel);
+      window.addEventListener("killbyte:beforeNavigate", () => {
+        document.removeEventListener("fullscreenchange", updateFullscreenLabel);
+      }, { once: true });
 
       gameDescription.addEventListener("click", (event) => {
         const link = event.target.closest("a[href]");

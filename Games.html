@@ -5,6 +5,7 @@
     <link rel="stylesheet" href="styles.css" />
     <script src="context-menu.js" defer></script>
     <script src="site-settings.js" defer></script>
+    <script src="navigation.js" defer></script>
   </head>
   <body class="details-page games-page">
     <nav class="page-nav" aria-label="Main navigation">
@@ -48,11 +49,15 @@
           }
         });
 
-        document.addEventListener("fullscreenchange", () => {
+        const updateFullscreenLabel = () => {
           gameFullscreen.textContent = document.fullscreenElement === gameFrame
             ? "⛶ Exit fullscreen"
             : "⛶ Fullscreen";
-        });
+        };
+        document.addEventListener("fullscreenchange", updateFullscreenLabel);
+        window.addEventListener("killbyte:beforeNavigate", () => {
+          document.removeEventListener("fullscreenchange", updateFullscreenLabel);
+        }, { once: true });
 
         document.querySelector(".close-button").addEventListener("click", () => {
           document.getElementById("game-warning").remove();

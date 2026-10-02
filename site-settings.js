@@ -1,51 +1,59 @@
-(() => {
+window.initializeKillbytePageSettings = () => {
   const root = document.documentElement;
 
-  const orbField = document.createElement("div");
-  orbField.className = "orb-field";
-  orbField.setAttribute("aria-hidden", "true");
-  const orbSettings = [
-    ["8%", "18%", "3px", "0.8", "var(--neon-color)", "18px", "14s", "-3s", "18px", "-12px"],
-    ["24%", "72%", "2px", "0.7", "var(--neon-secondary)", "13px", "17s", "-8s", "-24px", "16px"],
-    ["42%", "34%", "4px", "0.75", "var(--neon-color)", "22px", "20s", "-11s", "22px", "20px"],
-    ["62%", "82%", "2px", "0.65", "var(--neon-secondary)", "14px", "15s", "-5s", "-18px", "-18px"],
-    ["78%", "24%", "3px", "0.8", "var(--neon-color)", "17px", "19s", "-14s", "16px", "-20px"],
-    ["91%", "64%", "4px", "0.72", "var(--neon-secondary)", "21px", "16s", "-2s", "-20px", "12px"]
-  ];
+  const orbField = document.querySelector(".orb-field") || document.createElement("div");
+  if (!orbField.isConnected) {
+    orbField.className = "orb-field";
+    orbField.setAttribute("aria-hidden", "true");
+    const orbSettings = [
+      ["8%", "18%", "3px", "0.8", "var(--neon-color)", "18px", "14s", "-3s", "18px", "-12px"],
+      ["24%", "72%", "2px", "0.7", "var(--neon-secondary)", "13px", "17s", "-8s", "-24px", "16px"],
+      ["42%", "34%", "4px", "0.75", "var(--neon-color)", "22px", "20s", "-11s", "22px", "20px"],
+      ["62%", "82%", "2px", "0.65", "var(--neon-secondary)", "14px", "15s", "-5s", "-18px", "-18px"],
+      ["78%", "24%", "3px", "0.8", "var(--neon-color)", "17px", "19s", "-14s", "16px", "-20px"],
+      ["91%", "64%", "4px", "0.72", "var(--neon-secondary)", "21px", "16s", "-2s", "-20px", "12px"]
+    ];
 
-  orbSettings.forEach((settings) => {
-    const orb = document.createElement("span");
-    orb.className = "orb";
-    ["--orb-x", "--orb-y", "--orb-size", "--orb-opacity", "--orb-color", "--orb-blur", "--orb-duration", "--orb-delay", "--orb-drift-x", "--orb-drift-y"].forEach((property, index) => {
-      orb.style.setProperty(property, settings[index]);
+    orbSettings.forEach((settings) => {
+      const orb = document.createElement("span");
+      orb.className = "orb";
+      ["--orb-x", "--orb-y", "--orb-size", "--orb-opacity", "--orb-color", "--orb-blur", "--orb-duration", "--orb-delay", "--orb-drift-x", "--orb-drift-y"].forEach((property, index) => {
+        orb.style.setProperty(property, settings[index]);
+      });
+      orbField.appendChild(orb);
     });
-    orbField.appendChild(orb);
-  });
-  document.body.prepend(orbField);
+    document.body.prepend(orbField);
+  }
 
-  const backgroundLayer = document.createElement("div");
-  backgroundLayer.className = "background-layer";
-  backgroundLayer.setAttribute("aria-hidden", "true");
-  document.body.prepend(backgroundLayer);
+  const backgroundLayer = document.querySelector(".background-layer") || document.createElement("div");
+  if (!backgroundLayer.isConnected) {
+    backgroundLayer.className = "background-layer";
+    backgroundLayer.setAttribute("aria-hidden", "true");
+    document.body.prepend(backgroundLayer);
+  }
 
-  const batteryIndicator = document.createElement("div");
-  batteryIndicator.className = "battery-indicator";
-  batteryIndicator.hidden = true;
-  batteryIndicator.setAttribute("role", "status");
-  batteryIndicator.innerHTML = `
-    <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
-    <span class="battery-label"></span>
-  `;
-  document.body.appendChild(batteryIndicator);
+  const batteryIndicator = document.querySelector(".battery-indicator") || document.createElement("div");
+  if (!batteryIndicator.isConnected) {
+    batteryIndicator.className = "battery-indicator";
+    batteryIndicator.hidden = true;
+    batteryIndicator.setAttribute("role", "status");
+    batteryIndicator.innerHTML = `
+      <span class="battery-icon" aria-hidden="true"><span class="battery-level"></span></span>
+      <span class="battery-label"></span>
+    `;
+    document.body.appendChild(batteryIndicator);
+  }
 
-  const clockIndicator = document.createElement("div");
-  clockIndicator.className = "clock-indicator";
-  clockIndicator.setAttribute("role", "timer");
-  clockIndicator.innerHTML = `
-    <span class="clock-time"></span>
-    <span class="clock-date"></span>
-  `;
-  document.body.appendChild(clockIndicator);
+  const clockIndicator = document.querySelector(".clock-indicator") || document.createElement("div");
+  if (!clockIndicator.isConnected) {
+    clockIndicator.className = "clock-indicator";
+    clockIndicator.setAttribute("role", "timer");
+    clockIndicator.innerHTML = `
+      <span class="clock-time"></span>
+      <span class="clock-date"></span>
+    `;
+    document.body.appendChild(clockIndicator);
+  }
 
   const updateClock = () => {
     const now = new Date();
@@ -62,10 +70,13 @@
   };
 
   updateClock();
-  window.setInterval(updateClock, 1000);
+  if (!window.killbyteClockInterval) {
+    window.killbyteClockInterval = window.setInterval(updateClock, 1000);
+  }
 
   async function setupBatteryIndicator() {
-    if (!navigator.getBattery) return;
+    if (!navigator.getBattery || window.killbyteBatterySetup) return;
+    window.killbyteBatterySetup = true;
 
     try {
       const battery = await navigator.getBattery();
@@ -99,6 +110,8 @@
   };
 
   function renderTheme(theme) {
+    if (window.killbyteRenderedTheme === theme) return;
+    window.killbyteRenderedTheme = theme;
     document.body.classList.remove("theme-rain", "theme-space", "theme-sakura", "theme-snow", "theme-media");
     backgroundLayer.replaceChildren();
     if (theme === "default") return;
@@ -126,10 +139,11 @@
   const mediaDatabase = "killbyte-media";
   const mediaStore = "background";
   const videoTimeKey = "killbyte-background-video-time";
-  let activeBackgroundVideo = null;
+  let activeBackgroundVideo = window.killbyteActiveBackgroundVideo || null;
 
   function configureBackgroundVideo(video) {
     activeBackgroundVideo = video;
+    window.killbyteActiveBackgroundVideo = video;
     video.addEventListener("loadedmetadata", () => {
       const savedTime = Number(localStorage.getItem(videoTimeKey));
       if (Number.isFinite(savedTime) && savedTime > 0 && savedTime < video.duration) {
@@ -141,11 +155,14 @@
     });
   }
 
-  window.addEventListener("pagehide", () => {
-    if (activeBackgroundVideo) {
-      localStorage.setItem(videoTimeKey, String(activeBackgroundVideo.currentTime));
-    }
-  });
+  if (!window.killbyteBackgroundPagehideListener) {
+    window.killbyteBackgroundPagehideListener = true;
+    window.addEventListener("pagehide", () => {
+      if (window.killbyteActiveBackgroundVideo) {
+        localStorage.setItem(videoTimeKey, String(window.killbyteActiveBackgroundVideo.currentTime));
+      }
+    });
+  }
 
   function openMediaDatabase() {
     return new Promise((resolve, reject) => {
@@ -202,6 +219,7 @@
   }
 
   async function applySavedMedia() {
+    if (backgroundLayer.childElementCount > 0) return;
     const picture = await loadMedia("picture");
     const videoSource = await loadMedia("video");
 
@@ -342,6 +360,7 @@
     deleteMedia();
     localStorage.removeItem(videoTimeKey);
     activeBackgroundVideo = null;
+    window.killbyteActiveBackgroundVideo = null;
     localStorage.setItem("killbyte-background-theme", "default");
     document.body.style.backgroundImage = "";
     backgroundLayer.replaceChildren();
@@ -432,4 +451,6 @@
       window.setInterval(showWarning, 120000);
     });
   }
-})();
+};
+
+window.initializeKillbytePageSettings();
