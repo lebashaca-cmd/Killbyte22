@@ -437,7 +437,12 @@ body > :not(.background-layer):not(.page-nav):not(.context-menu):not(.battery-in
   max-width: none;
 }
 
-@media (max-width: 600px) {
+.sidebar-layout.games-page,
+.sidebar-layout.browser-page {
+  padding-left: 248px;
+}
+
+@media (max-width: 760px) {
   .sidebar-layout {
     padding: 90px 16px 16px;
   }
@@ -468,6 +473,11 @@ body > :not(.background-layer):not(.page-nav):not(.context-menu):not(.battery-in
 
   .sidebar-layout .page-nav a::before {
     display: none;
+  }
+
+  .sidebar-layout.games-page,
+  .sidebar-layout.browser-page {
+    padding-left: 16px;
   }
 }
 
