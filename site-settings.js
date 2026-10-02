@@ -1,6 +1,31 @@
 window.initializeKillbytePageSettings = () => {
   const root = document.documentElement;
 
+  const siteFonts = {
+    trebuchet: '"Trebuchet MS", "Segoe UI", sans-serif',
+    arial: "Arial, sans-serif",
+    verdana: "Verdana, sans-serif",
+    georgia: "Georgia, serif",
+    courier: '"Courier New", monospace'
+  };
+  const savedFont = localStorage.getItem("killbyte-site-font") || "trebuchet";
+  const selectedFont = siteFonts[savedFont] ? savedFont : "trebuchet";
+  root.style.setProperty("--site-font", siteFonts[selectedFont]);
+
+  if (!window.killbyteFontChangeListener) {
+    window.killbyteFontChangeListener = true;
+    document.addEventListener("change", (event) => {
+      if (event.target.id !== "site-font") return;
+      const font = siteFonts[event.target.value];
+      if (!font) return;
+
+      root.style.setProperty("--site-font", font);
+      localStorage.setItem("killbyte-site-font", event.target.value);
+    });
+  }
+  const fontPicker = document.getElementById("site-font");
+  if (fontPicker) fontPicker.value = selectedFont;
+
   const orbField = document.querySelector(".orb-field") || document.createElement("div");
   if (!orbField.isConnected) {
     orbField.className = "orb-field";

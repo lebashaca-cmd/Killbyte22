@@ -2,6 +2,7 @@
   --neon-color: #ff00b3;
   --neon-secondary: #b600ff;
   --neon-light: var(--neon-secondary);
+  --site-font: "Trebuchet MS", "Segoe UI", sans-serif;
 }
 
 * {
@@ -51,7 +52,7 @@ body {
   padding: 100px 24px 24px;
   background: radial-gradient(circle at top, color-mix(in srgb, var(--neon-secondary) 28%, #35102f), #09090d 65%);
   color: white;
-  font-family: Arial, sans-serif;
+  font-family: var(--site-font);
   overflow-x: hidden;
 }
 
@@ -335,6 +336,7 @@ body > :not(.background-layer):not(.page-nav):not(.context-menu):not(.battery-in
   padding: 0 0 16px;
   border-bottom: 1px solid color-mix(in srgb, var(--neon-light) 35%, transparent);
   color: #f3f4ff;
+  font-family: inherit;
   font-size: 25px;
   font-weight: bold;
   letter-spacing: 2px;
@@ -878,7 +880,7 @@ iframe .Scrollingbox {
   background: linear-gradient(145deg, color-mix(in srgb, var(--neon-secondary) 12%, #050714), color-mix(in srgb, var(--neon-color) 8%, #0f0c14));
   box-shadow: 0 0 15px color-mix(in srgb, var(--neon-color) 55%, transparent), 0 12px 32px rgba(0, 0, 0, 0.55);
   color: white;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
 }
 
 .context-menu[hidden] {
@@ -1009,6 +1011,25 @@ iframe .Scrollingbox {
   width: 20px;
   height: 20px;
   accent-color: var(--neon-color);
+}
+
+.setting-select {
+  max-width: 52%;
+  padding: 9px 32px 9px 11px;
+  border: 1px solid var(--neon-light);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--neon-secondary) 12%, #0f0c14);
+  color: white;
+  font: inherit;
+}
+
+.setting-select:focus-visible {
+  outline: 2px solid var(--neon-color);
+}
+
+.setting-select option {
+  background: #0f0c14;
+  color: white;
 }
 
 .media-file-row {
