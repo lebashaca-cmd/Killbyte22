@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Settings - KillByte</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="context-menu.js" defer></script>
+    <script src="site-settings.js" defer></script>
+  </head>
+  <body class="details-page">
+    <nav class="page-nav" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="About.html">About</a>
+      <a href="Links.html">Links</a>
+      <a href="Games.html">Games</a>
+      <a href="browser.html">Browser</a>
+      <a href="settings.html" aria-current="page">Settings</a>
+    </nav>
+    <div class="box">
+      <h1>Settings</h1>
+      <h3>KillByte preferences</h3>
+      <div class="box settings-panel">
+        <h2>Layout style</h2>
+        <div class="setting-row">
+          <span>Choose the website layout</span>
+          <details class="background-theme-picker" id="layout-style-picker">
+            <summary id="layout-style-label">Top navigation</summary>
+            <div class="background-theme-options" role="radiogroup" aria-label="Layout style">
+              <label><input type="radio" name="layout-style" value="default" />Top navigation</label>
+              <label><input type="radio" name="layout-style" value="sidebar" />Sidebar navigation</label>
+            </div>
+          </details>
+        </div>
+      </div>
+      <div class="box settings-panel">
+        <h2>Background theme</h2>
+        <div class="setting-row">
+          <span>Choose an animated background</span>
+          <details class="background-theme-picker" id="background-theme-picker">
+            <summary id="background-theme-label">Neon gradient</summary>
+            <div class="background-theme-options" role="radiogroup" aria-label="Background theme">
+              <label><input type="radio" name="background-theme" value="default" />Neon gradient</label>
+              <label><input type="radio" name="background-theme" value="rain" />Rain</label>
+              <label><input type="radio" name="background-theme" value="space" />Space orbs</label>
+              <label><input type="radio" name="background-theme" value="sakura" />Falling sakura</label>
+              <label><input type="radio" name="background-theme" value="snow" />Falling snow</label>
+              <label><input type="radio" name="background-theme" value="media" />Picture or video</label>
+            </div>
+          </details>
+        </div>
+        <div id="background-media-controls" hidden>
+          <div class="media-file-row">
+            <span>Background picture</span>
+            <label class="file-picker" for="background-picture">
+              <span class="file-picker-button">Choose picture</span>
+              <span id="background-picture-name" class="file-picker-name">No picture selected</span>
+              <input id="background-picture" type="file" accept="image/*" />
+            </label>
+          </div>
+          <div class="media-file-row">
+            <span>Background video</span>
+            <label class="file-picker" for="background-video">
+              <span class="file-picker-button">Choose video</span>
+              <span id="background-video-name" class="file-picker-name">No video selected</span>
+              <input id="background-video" type="file" accept="video/*" />
+            </label>
+          </div>
+          <button id="clear-background-media" class="enter-button" type="button">Clear picture/video</button>
+        </div>
+      </div>
+      <div class="box settings-panel">
+        <h2>Neon glow color</h2>
+        <label class="setting-row" for="neon-color">
+          <span>Choose the primary glow color</span>
+          <input id="neon-color" type="color" value="#ff00b3" />
+        </label>
+        <p>Selected color: <span id="neon-color-value">#ff00b3</span></p>
+        <label class="setting-row" for="neon-secondary">
+          <span>Choose the secondary glow color</span>
+          <input id="neon-secondary" type="color" value="#b600ff" />
+        </label>
+        <p>Secondary color: <span id="neon-secondary-value">#b600ff</span></p>
+      </div>
+      <div class="box settings-panel">
+        <h2>About:blank cloaking</h2>
+        <label class="setting-row" for="cloak-toggle">
+          <span>Enable cloaking option</span>
+          <input id="cloak-toggle" type="checkbox" />
+        </label>
+        <p>This opens this page inside a new about:blank tab. Your current tab's address cannot be changed to about:blank while keeping the page open.</p>
+        <button id="cloak-button" class="enter-button" type="button" disabled>Open this page cloaked</button>
+      </div>
+    </div>
+  </body>
+</html>

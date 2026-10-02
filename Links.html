@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Page Title</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="context-menu.js" defer></script>
+    <script src="site-settings.js" defer></script>
+  </head>
+  <body class="Scrollingbox">
+    <nav class="page-nav" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="About.html">About</a>
+      <a href="Links.html" aria-current="page">Links</a>
+      <a href="Games.html">Games</a>
+      <a href="browser.html">Browser</a>
+      <a href="settings.html">Settings</a>
+    </nav>
+    <div class="box">
+      <h1>Type:</h1>
+      <button class="box game-button" type="button" data-icon="◈" data-game="Proxies" data-description="Monoxide - www.monoxide.dev | CineOS - https://cineos-three.vercel.app/ | Cherri - https://chelmsfordrfc.com/ ">Proxies</button>
+      <button class="box game-button" type="button" data-icon="✧" data-game="Websites/Ai" data-description="Chatgpt (Open in new tab) - www.chatgpt.com | OpenAi (Open in new tab) - www.openai.com | Soundcloud (Open in new tab) - www.soundcloud.com">Websites/Ai</button>
+      <button class="box game-button" type="button" data-icon="◎" data-game="Browsers" data-description="Ecosia (Copy link into browser!) - www.ecosia.org | Search for trees - https://www.searchfortrees.com/">Browsers</button>
+      <h2>-- school --</h2>
+      <button class="box game-button" type="button" data-icon="▣" data-game="Websites" data-description="Clever - www.Clever.com | Zearn - www.Zearn.org | Amplify - www.learning.amplify.com">Websites</button>
+      <button class="box game-button" type="button" data-icon="⚙" data-game="Tools" data-description="Desomos - www.desmos.com">Tools</button>
+      _____________
+    </div>
+    <div class="WOWOW">
+      <div class="box" id="game-details" aria-live="polite">
+        <h1 id="game-title">Killbyte</h1>
+        <h2 id="game-subtitle">Choose a tab</h2>
+        <p id="game-description">Select a tab from the list to see its information here.</p>
+        <div class="iframe-toolbar" hidden>
+          <button id="frame-fullscreen" class="fullscreen-button" type="button">⛶ Fullscreen</button>
+        </div>
+        <iframe id="site-frame" title="Selected website" loading="lazy" referrerpolicy="no-referrer" allowfullscreen hidden></iframe>
+        <p id="frame-note" hidden>If this site goes blank, it blocks iframe navigation. Use “Open in new tab” instead.</p>
+        <a id="external-link" class="enter-button" href="#" target="_blank" rel="noopener noreferrer" hidden>Open in new tab</a>
+      </div>
+    </div>
+    <script>
+      const gameButtons = document.querySelectorAll(".game-button");
+      gameButtons.forEach((button) => {
+        const icon = document.createElement("span");
+        icon.className = "button-logo";
+        icon.setAttribute("aria-hidden", "true");
+        icon.textContent = button.dataset.icon || "✦";
+        button.prepend(icon);
+      });
+
+      const gameTitle = document.getElementById("game-title");
+      const gameSubtitle = document.getElementById("game-subtitle");
+      const gameDescription = document.getElementById("game-description");
+      const siteFrame = document.getElementById("site-frame");
+      const frameNote = document.getElementById("frame-note");
+      const externalLink = document.getElementById("external-link");
+      const iframeToolbar = document.querySelector(".iframe-toolbar");
+      const frameFullscreen = document.getElementById("frame-fullscreen");
+
+      async function toggleFullscreen(frame, button) {
+        if (!document.fullscreenElement) {
+          await frame.requestFullscreen();
+          button.textContent = "⛶ Exit fullscreen";
+        } else {
+          await document.exitFullscreen();
+          button.textContent = "⛶ Fullscreen";
+        }
+      }
+
+      frameFullscreen.addEventListener("click", async () => {
+        try {
+          await toggleFullscreen(siteFrame, frameFullscreen);
+        } catch {
+          frameFullscreen.textContent = "Fullscreen unavailable";
+        }
+      });
+
+      document.addEventListener("fullscreenchange", () => {
+        frameFullscreen.textContent = document.fullscreenElement === siteFrame
+          ? "⛶ Exit fullscreen"
+          : "⛶ Fullscreen";
+      });
+
+      gameDescription.addEventListener("click", (event) => {
+        const link = event.target.closest("a[href]");
+        if (!link) return;
+
+        event.preventDefault();
+        siteFrame.src = link.href;
+        siteFrame.hidden = false;
+        iframeToolbar.hidden = false;
+        frameNote.hidden = false;
+        externalLink.href = `browser.html?url=${encodeURIComponent(link.href)}`;
+        externalLink.hidden = false;
+      });
+
+      gameButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          gameTitle.textContent = button.dataset.game;
+          gameSubtitle.textContent = "Killbyte options";
+          gameDescription.replaceChildren();
+          button.dataset.description.split("|").forEach((item) => {
+            const paragraph = document.createElement("p");
+            const entry = item.trim();
+            const match = entry.match(/^(.*?)\s*-\s*(https?:\/\/|www\.)\S+$/i);
+
+            if (match) {
+              const url = entry.slice(match[1].length).replace(/^\s*-\s*/, "");
+              const link = document.createElement("a");
+              link.href = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+              link.textContent = entry;
+              link.target = "_blank";
+              link.rel = "noopener noreferrer";
+              paragraph.appendChild(link);
+            } else {
+              paragraph.textContent = entry;
+            }
+
+            gameDescription.appendChild(paragraph);
+          });
+          siteFrame.hidden = true;
+          iframeToolbar.hidden = true;
+          frameNote.hidden = true;
+          externalLink.hidden = true;
+        });
+      });
+    </script>
+  </body>
+</html>

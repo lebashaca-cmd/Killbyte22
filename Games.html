@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Games - KillByte</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="context-menu.js" defer></script>
+    <script src="site-settings.js" defer></script>
+  </head>
+  <body class="details-page games-page">
+    <nav class="page-nav" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="About.html">About</a>
+      <a href="Links.html">Links</a>
+      <a href="Games.html" aria-current="page">Games</a>
+      <a href="browser.html">Browser</a>
+      <a href="settings.html">Settings</a>
+    </nav>
+    <div class="box">
+      <h1>Games</h1>
+      <div class="iframe-toolbar">
+        <button id="game-fullscreen" class="fullscreen-button" type="button">⛶ Fullscreen</button>
+      </div>
+      <iframe
+        id="game-frame"
+        src="https://ghost-mathmulti.zeoghost.workers.dev/"
+        title="Ghost Math Multi"
+        loading="lazy"
+        allowfullscreen
+      ></iframe>
+      <div class="box warning-box" id="game-warning">
+        <button class="close-button" type="button" aria-label="Close warning" title="Close warning">×</button>
+        <h2>Warning!</h2>
+        <h3>Many people use this, wait time high!</h3>
+      </div>
+      <script>
+        const gameFrame = document.getElementById("game-frame");
+        const gameFullscreen = document.getElementById("game-fullscreen");
+
+        gameFullscreen.addEventListener("click", async () => {
+          try {
+            if (!document.fullscreenElement) {
+              await gameFrame.requestFullscreen();
+            } else {
+              await document.exitFullscreen();
+            }
+          } catch {
+            gameFullscreen.textContent = "Fullscreen unavailable";
+          }
+        });
+
+        document.addEventListener("fullscreenchange", () => {
+          gameFullscreen.textContent = document.fullscreenElement === gameFrame
+            ? "⛶ Exit fullscreen"
+            : "⛶ Fullscreen";
+        });
+
+        document.querySelector(".close-button").addEventListener("click", () => {
+          document.getElementById("game-warning").remove();
+        });
+      </script>
+    </div>
+  </body>
+</html>

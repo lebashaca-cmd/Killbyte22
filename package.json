@@ -1,0 +1,13 @@
+{
+  "name": "killbyte-site",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "@mercuryworkshop/epoxy-transport": "3.0.1",
+    "@mercuryworkshop/scramjet": "2.0.67-alpha.2",
+    "@mercuryworkshop/scramjet-controller": "0.0.14"
+  }
+}

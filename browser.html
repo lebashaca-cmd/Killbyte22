@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Browser - Killbyte</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="context-menu.js" defer></script>
+    <script src="site-settings.js" defer></script>
+    <script src="proxy-config.js"></script>
+    <script src="/scramjet/scramjet.js" defer></script>
+    <script src="/controller/controller.api.js" defer></script>
+    <script src="/epoxy/index.js" defer></script>
+    <script src="browser.js" defer></script>
+  </head>
+  <body class="details-page browser-page">
+    <nav class="page-nav" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="About.html">About</a>
+      <a href="Links.html">Links</a>
+      <a href="Games.html">Games</a>
+      <a href="browser.html" aria-current="page">Browser</a>
+      <a href="settings.html">Settings</a>
+    </nav>
+    <main class="box">
+      <h1>Browser</h1>
+      <form id="browser-form" class="browser-toolbar">
+        <div class="browser-controls" aria-label="Browser controls">
+          <button id="browser-back" type="button" aria-label="Go back" title="Go back">←</button>
+          <button id="browser-forward" type="button" aria-label="Go forward" title="Go forward">→</button>
+          <button id="browser-reload" type="button" aria-label="Reload page" title="Reload page">↻</button>
+        </div>
+        <input
+          id="browser-address"
+          type="text"
+          placeholder="Enter a website or search"
+          aria-label="Website address or search"
+          autocomplete="url"
+          spellcheck="false"
+        />
+        <button class="enter-button" type="submit">Go</button>
+        <button id="browser-fullscreen" class="fullscreen-button" type="button">⛶ Fullscreen</button>
+      </form>
+      <p id="browser-status" class="browser-status" role="status" aria-live="polite">Starting Scramjet…</p>
+      <iframe id="browser-frame" title="Scramjet browser" allow="fullscreen; autoplay; clipboard-read; clipboard-write"></iframe>
+    </main>
+  </body>
+</html>
