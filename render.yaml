@@ -13,14 +13,14 @@ services:
     staticPublishPath: ./dist
     envVars:
       - key: KILLBYTE_UV_WISP_HOST
-        fromService:
-          type: web
-          name: killbyte-uv-wisp
-          property: url
+        value: killbyte-uv-wisp.onrender.com
     headers:
       - path: /sw.js
         name: Cache-Control
         value: no-cache
       - path: /uv/sw.js
+        name: Cache-Control
+        value: no-cache
+      - path: /uv-proxy-config.js
         name: Cache-Control
         value: no-cache

@@ -33,9 +33,14 @@ for (const directory of ["scramjet", "controller", "epoxy", "baremux", "uv"]) {
 }
 
 const configuredWispHost = process.env.KILLBYTE_UV_WISP_HOST || "killbyte-uv-wisp.onrender.com";
-const wispUrl = /^wss?:\/\//i.test(configuredWispHost)
-  ? `${configuredWispHost.replace(/\/+$/, "")}/wisp/`
-  : `wss://${configuredWispHost.replace(/^https?:\/\//i, "").replace(/\/+$/, "")}/wisp/`;
+const normalizedWispHost = configuredWispHost
+  .replace(/^wss?:\/\//i, "")
+  .replace(/^https?:\/\//i, "")
+  .replace(/\/+$/, "");
+const wispProtocol = /^http:\/\//i.test(configuredWispHost) || /^ws:\/\//i.test(configuredWispHost)
+  ? "ws"
+  : "wss";
+const wispUrl = `${wispProtocol}://${normalizedWispHost}/wisp/`;
 
 await Promise.all([
   cp(
