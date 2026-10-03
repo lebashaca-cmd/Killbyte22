@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chat - Killbyte</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="context-menu.js" defer></script>
+    <script src="site-settings.js" defer></script>
+    <script src="navigation.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="chat-config.js" defer></script>
+    <script src="chat.js" defer></script>
+  </head>
+  <body class="details-page chat-page">
+    <nav class="page-nav" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="Links.html">Links</a>
+      <a href="Games.html">Games</a>
+      <a href="browser.html">Browser</a>
+      <a href="settings.html">Settings</a>
+      <div class="sidebar-beta-section">
+        <h4 class="sidebar-nav-beta">Beta</h4>
+        <hr class="sidebar-nav-divider" aria-hidden="true" />
+        <a href="chat.html" aria-current="page">Chat</a>
+        <a href="Media.html">Media</a>
+        <a href="Music.html">Music</a>
+      </div>
+    </nav>
+    <main class="box chat-shell">
+      <header class="chat-header">
+        <div>
+          <h1># general</h1>
+          <p>Say hello to the Killbyte community.</p>
+        </div>
+        <span class="chat-beta-tag">Beta</span>
+      </header>
+
+      <p id="chat-status" class="chat-status" role="status" aria-live="polite"></p>
+
+      <section id="chat-setup" class="box chat-setup" hidden>
+        <h2>Connect your chat</h2>
+        <p>Chat needs a Supabase project before accounts and live messages can be enabled.</p>
+        <ol>
+          <li>Create a Supabase project and copy its project URL and public anon key.</li>
+          <li>Set <code>KILLBYTE_SUPABASE_URL</code> and <code>KILLBYTE_SUPABASE_ANON_KEY</code> in <code>chat-config.js</code>.</li>
+          <li><a href="supabase-chat.sql" download>Download the chat SQL</a> and run it in the Supabase SQL Editor.</li>
+          <li>Enable Realtime for <code>public.chat_messages</code> using the <a href="CHAT-SETUP.md">setup guide</a>.</li>
+        </ol>
+      </section>
+
+      <section id="chat-auth" class="box chat-auth" hidden>
+        <h2>Your account</h2>
+        <p class="chat-caption">Sign in or create an account to join the live chat.</p>
+        <div class="chat-auth-tabs" role="tablist" aria-label="Account action">
+          <button id="chat-signin-tab" type="button" role="tab" aria-selected="true">Sign in</button>
+          <button id="chat-signup-tab" type="button" role="tab" aria-selected="false">Create account</button>
+        </div>
+        <form id="chat-auth-form">
+          <label id="chat-name-field" hidden>
+            Display name
+            <input id="chat-display-name" name="displayName" type="text" minlength="2" maxlength="32" autocomplete="nickname" />
+          </label>
+          <label>
+            Email
+            <input id="chat-email" name="email" type="email" autocomplete="email" required maxlength="254" />
+          </label>
+          <label>
+            Password
+            <input id="chat-password" name="password" type="password" autocomplete="current-password" required minlength="8" maxlength="72" />
+          </label>
+          <button id="chat-auth-submit" class="enter-button" type="submit">Sign in</button>
+        </form>
+      </section>
+
+      <section id="chat-panel" class="chat-panel" aria-label="General chat" hidden>
+        <div class="chat-account-bar">
+          <p>Signed in as <strong id="chat-current-user"></strong></p>
+          <button id="chat-signout" type="button">Sign out</button>
+        </div>
+        <ol id="chat-messages" class="chat-messages" aria-live="polite" aria-relevant="additions"></ol>
+        <form id="chat-composer" class="chat-composer">
+          <label class="visually-hidden" for="chat-message-input">Message #general</label>
+          <input
+            id="chat-message-input"
+            class="chat-message-input"
+            name="message"
+            type="text"
+            maxlength="1000"
+            placeholder="Message #general..."
+            autocomplete="off"
+            required
+          />
+          <button class="chat-send-button" type="submit">Send</button>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>

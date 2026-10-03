@@ -6,12 +6,16 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 const output = path.join(root, "dist");
 const siteFiles = [
   "About.html",
+  "CHAT-SETUP.md",
   "Games.html",
   "Links.html",
   "Media.html",
   "Music.html",
   "browser.html",
   "browser.js",
+  "chat.html",
+  "chat-config.js",
+  "chat.js",
   "context-menu.js",
   "index.html",
   "navigation.js",
@@ -20,6 +24,7 @@ const siteFiles = [
   "settings.html",
   "site-settings.js",
   "styles.css",
+  "supabase-chat.sql",
   "sw.js"
 ];
 
