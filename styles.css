@@ -1583,7 +1583,7 @@ iframe {
   max-height: 900px;
   padding: 0;
   overflow: hidden;
-  text-align: center;
+  text-align: right;
 }
 
 .chat-header,
