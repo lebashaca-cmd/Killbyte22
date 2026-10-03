@@ -6,7 +6,6 @@ const port = Number(process.env.PORT || 10000);
 wisp.options.port_whitelist = [80, 443];
 wisp.options.allow_direct_ip = false;
 wisp.options.allow_udp_streams = false;
-wisp.options.stream_limit_per_host = 20;
 wisp.options.stream_limit_total = 100;
 
 const server = createServer((request, response) => {
