@@ -1,10 +1,26 @@
 services:
   - type: web
+    name: killbyte-uv-wisp
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: node uv-wisp-server.mjs
+    healthCheckPath: /health
+  - type: web
     name: killbyte
     runtime: static
     buildCommand: npm ci && npm run build
     staticPublishPath: ./dist
+    envVars:
+      - key: KILLBYTE_UV_WISP_HOST
+        fromService:
+          type: web
+          name: killbyte-uv-wisp
+          property: host
     headers:
       - path: /sw.js
+        name: Cache-Control
+        value: no-cache
+      - path: /uv/sw.js
         name: Cache-Control
         value: no-cache

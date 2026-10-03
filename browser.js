@@ -6,6 +6,10 @@
   const status = document.getElementById("browser-status");
   const fullscreenButton = document.getElementById("browser-fullscreen");
   const initialUrl = new URLSearchParams(window.location.search).get("url");
+  const selectedProxy = localStorage.getItem("killbyte-browser-proxy") === "ultraviolet"
+    ? "ultraviolet"
+    : "scramjet";
+  const proxyName = selectedProxy === "ultraviolet" ? "Ultraviolet" : "Scramjet";
   const searchUrl = (value) => {
     const trimmed = value.trim();
     if (!trimmed) return null;
@@ -36,12 +40,16 @@
 
     address.value = url;
     if (!frameReady) {
-      status.textContent = "Scramjet is still starting. Try again in a moment.";
+      status.textContent = `${proxyName} is still starting. Try again in a moment.`;
       return;
     }
 
     status.textContent = `Loading ${url}`;
-    proxiedFrame.go(url);
+    if (selectedProxy === "ultraviolet") {
+      frameElement.src = `${window.__uv$config.prefix}${window.__uv$config.encodeUrl(url)}`;
+    } else {
+      proxiedFrame.go(url);
+    }
     window.history.replaceState(null, "", `?url=${encodeURIComponent(url)}`);
   }
 
@@ -86,51 +94,96 @@
   }, { once: true });
 
   frameElement.addEventListener("load", () => {
-    if (frameReady) status.textContent = "Ready";
+    if (frameReady) status.textContent = `${proxyName} ready`;
   });
 
   async function initialize() {
     if (!("serviceWorker" in navigator)) {
-      status.textContent = "This browser does not support service workers required by Scramjet.";
+      status.textContent = `This browser does not support service workers required by ${proxyName}.`;
       return;
     }
 
     try {
-      if (!window.$scramjetController || !window.$scramjet || !window.EpoxyTransport) {
-        throw new Error("Scramjet files did not load. Rebuild and redeploy the site.");
+      status.textContent = `Starting ${proxyName}…`;
+      if (selectedProxy === "ultraviolet") {
+        await initializeUltraviolet();
+      } else {
+        await initializeScramjet();
       }
-      if (!window.KILLBYTE_WISP_URL) {
-        throw new Error("Set KILLBYTE_WISP_URL in proxy-config.js to a Wisp WebSocket URL.");
-      }
-
-      status.textContent = "Connecting to the proxy…";
-      await navigator.serviceWorker.register("/sw.js");
-      await navigator.serviceWorker.ready;
-      const serviceworker = navigator.serviceWorker.controller
-        || (await navigator.serviceWorker.ready).active;
-      if (!serviceworker) {
-        throw new Error("The Scramjet service worker did not become active. Reload this page.");
-      }
-
-      const EpoxyTransport = window.EpoxyTransport.default;
-      const transport = new EpoxyTransport({ wisp: window.KILLBYTE_WISP_URL });
-      await transport.init();
-
-      const controller = new window.$scramjetController.Controller({
-        serviceworker,
-        transport,
-        scramjetConfig: window.$scramjet.defaultConfig
-      });
-      await controller.wait();
-
-      proxiedFrame = controller.createFrame(frameElement);
       frameReady = true;
-      status.textContent = "Ready";
+      status.textContent = `${proxyName} ready`;
       navigate(initialUrl || "https://google.com");
     } catch (error) {
-      console.error("Scramjet browser could not start.", error);
-      status.textContent = `Browser startup failed: ${error.message}`;
+      console.error(`${proxyName} browser could not start.`, error);
+      status.textContent = `${proxyName} startup failed: ${error.message}`;
     }
+  }
+
+  async function initializeScramjet() {
+    if (!window.$scramjetController || !window.$scramjet || !window.EpoxyTransport) {
+      throw new Error("Scramjet files did not load. Rebuild and redeploy the site.");
+    }
+    if (!window.KILLBYTE_WISP_URL) {
+      throw new Error("Set KILLBYTE_WISP_URL in proxy-config.js to a Wisp WebSocket URL.");
+    }
+
+    status.textContent = "Connecting to the Scramjet proxy…";
+    await navigator.serviceWorker.register("/sw.js");
+    await navigator.serviceWorker.ready;
+    const serviceworker = navigator.serviceWorker.controller
+      || (await navigator.serviceWorker.ready).active;
+    if (!serviceworker) {
+      throw new Error("The Scramjet service worker did not become active. Reload this page.");
+    }
+
+    const EpoxyTransport = window.EpoxyTransport.default;
+    const transport = new EpoxyTransport({ wisp: window.KILLBYTE_WISP_URL });
+    await transport.init();
+
+    const controller = new window.$scramjetController.Controller({
+      serviceworker,
+      transport,
+      scramjetConfig: window.$scramjet.defaultConfig
+    });
+    await controller.wait();
+    proxiedFrame = controller.createFrame(frameElement);
+  }
+
+  async function initializeUltraviolet() {
+    if (!window.BareMux?.BareMuxConnection || !window.Ultraviolet || !window.__uv$config) {
+      throw new Error("Ultraviolet files did not load. Rebuild and redeploy the site.");
+    }
+    if (!window.KILLBYTE_UV_WISP_URL) {
+      throw new Error("The Ultraviolet Render proxy endpoint is missing from the build.");
+    }
+
+    status.textContent = "Connecting to the Ultraviolet proxy…";
+    const registration = await navigator.serviceWorker.register("/uv/sw.js");
+    const worker = registration.active || registration.installing || registration.waiting;
+    if (!worker) {
+      throw new Error("The Ultraviolet service worker did not become active. Reload this page.");
+    }
+    if (worker.state !== "activated") {
+      await new Promise((resolve, reject) => {
+        const onStateChange = () => {
+          if (worker.state === "activated") {
+            worker.removeEventListener("statechange", onStateChange);
+            resolve();
+          }
+          if (worker.state === "redundant") {
+            worker.removeEventListener("statechange", onStateChange);
+            reject(new Error("The Ultraviolet service worker failed to install."));
+          }
+        };
+        worker.addEventListener("statechange", onStateChange);
+        onStateChange();
+      });
+    }
+
+    const connection = new window.BareMux.BareMuxConnection("/baremux/worker.js");
+    await connection.setTransport("/epoxy/index.mjs", [
+      { wisp: window.KILLBYTE_UV_WISP_URL }
+    ]);
   }
 
   initialize();

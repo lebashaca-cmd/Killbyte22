@@ -6,8 +6,12 @@
     "build": "node build.mjs"
   },
   "dependencies": {
+    "@mercuryworkshop/bare-mux": "2.1.8",
     "@mercuryworkshop/epoxy-transport": "3.0.1",
+    "@mercuryworkshop/epoxy-transport-uv": "npm:@mercuryworkshop/epoxy-transport@2.1.28",
     "@mercuryworkshop/scramjet": "2.0.67-alpha.2",
-    "@mercuryworkshop/scramjet-controller": "0.0.14"
+    "@mercuryworkshop/scramjet-controller": "0.0.14",
+    "@mercuryworkshop/wisp-js": "0.5.0",
+    "@titaniumnetwork-dev/ultraviolet": "3.2.10"
   }
 }

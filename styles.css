@@ -1021,6 +1021,11 @@ iframe .Scrollingbox {
   flex: 0 0 min(100%, 220px);
 }
 
+.proxy-picker {
+  width: min(100%, 220px);
+  flex: 0 0 min(100%, 220px);
+}
+
 .font-options label:has(input[value="arial"]) {
   font-family: Arial, sans-serif;
 }

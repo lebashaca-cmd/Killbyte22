@@ -40,6 +40,32 @@ window.initializeKillbytePageSettings = () => {
     option.checked = option.value === selectedFont;
   });
 
+  const proxyPicker = document.getElementById("browser-proxy-picker");
+  const proxyLabel = document.getElementById("browser-proxy-label");
+  const proxyOptions = document.querySelectorAll("input[name='browser-proxy']");
+  const proxyNames = {
+    scramjet: "Scramjet",
+    ultraviolet: "Ultraviolet"
+  };
+  if (proxyPicker) {
+    const savedProxy = localStorage.getItem("killbyte-browser-proxy") || "scramjet";
+    const updateProxy = (proxy) => {
+      const selectedProxy = proxyNames[proxy] ? proxy : "scramjet";
+      localStorage.setItem("killbyte-browser-proxy", selectedProxy);
+      if (proxyLabel) proxyLabel.textContent = proxyNames[selectedProxy];
+      proxyOptions.forEach((option) => {
+        option.checked = option.value === selectedProxy;
+      });
+    };
+    proxyOptions.forEach((option) => {
+      option.addEventListener("change", () => {
+        updateProxy(option.value);
+        proxyPicker.open = false;
+      });
+    });
+    updateProxy(savedProxy);
+  }
+
   const orbField = document.querySelector(".orb-field") || document.createElement("div");
   if (!orbField.isConnected) {
     orbField.className = "orb-field";

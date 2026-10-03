@@ -49,6 +49,20 @@
         </div>
       </div>
       <div class="box settings-panel">
+        <h2>Browser proxy</h2>
+        <div class="setting-row">
+          <span>Choose which proxy the Browser uses</span>
+          <details class="background-theme-picker proxy-picker" id="browser-proxy-picker">
+            <summary id="browser-proxy-label">Scramjet</summary>
+            <div class="background-theme-options" role="radiogroup" aria-label="Browser proxy">
+              <label><input type="radio" name="browser-proxy" value="scramjet" />Scramjet</label>
+              <label><input type="radio" name="browser-proxy" value="ultraviolet" />Ultraviolet</label>
+            </div>
+          </details>
+        </div>
+        <p>The selected proxy is used the next time you open the Browser. Ultraviolet connects through the Killbyte Render proxy service, which may take a moment to wake up.</p>
+      </div>
+      <div class="box settings-panel">
         <h2>Background theme</h2>
         <div class="setting-row">
           <span>Choose an animated background</span>
