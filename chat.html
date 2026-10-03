@@ -30,14 +30,14 @@
     </nav>
     <main class="box chat-shell">
       <header class="chat-header">
-        <div>
-          <h1># general</h1>
-          <p>Say hello to the Killbyte community.</p>
+        <nav class="chat-rooms" aria-label="Chat rooms">
+          <button class="chat-room-button" type="button" data-room="general" aria-pressed="true"># general</button>
+          <button class="chat-room-button" type="button" data-room="off-topic" aria-pressed="false"># off-topic</button>
+          <button class="chat-room-button" type="button" data-room="gaming" aria-pressed="false"># gaming</button>
         </div>
-        <span class="chat-beta-tag">Beta</span>
       </header>
 
-      <p id="chat-status" class="chat-status" role="status" aria-live="polite"></p>
+      <p id="chat-status" class="chat-status" role="status" aria-live="polite" hidden></p>
 
       <section id="chat-setup" class="box chat-setup" hidden>
         <h2>Connect your chat</h2>
@@ -56,21 +56,20 @@
         <a class="enter-button" href="account.html">Sign in or create an account</a>
       </section>
 
-      <section id="chat-panel" class="chat-panel" aria-label="General chat" hidden>
+      <section id="chat-panel" class="chat-panel" aria-label="Chat room" hidden>
         <div class="chat-account-bar">
-          <p>Signed in as <strong id="chat-current-user"></strong></p>
           <a class="enter-button" href="account.html">Account</a>
         </div>
         <ol id="chat-messages" class="chat-messages" aria-live="polite" aria-relevant="additions"></ol>
         <form id="chat-composer" class="chat-composer">
-          <label class="visually-hidden" for="chat-message-input">Message #general</label>
+          <label class="visually-hidden" for="chat-message-input">Message in chat room</label>
           <input
             id="chat-message-input"
             class="chat-message-input"
             name="message"
             type="text"
             maxlength="1000"
-            placeholder="Message #general..."
+            placeholder="Write a message..."
             autocomplete="off"
             required
           />

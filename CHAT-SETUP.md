@@ -1,6 +1,6 @@
 # Setting up Killbyte Chat
 
-Killbyte accounts use Supabase Auth across the whole site. Visitors can browse without an account; signing in is required to use the shared `#general` chat. The chat uses a Supabase Postgres table with Realtime. No passwords or service-role keys are stored in this site.
+Killbyte accounts use Supabase Auth across the whole site. Visitors can browse without an account; signing in is required to use the `#general`, `#off-topic`, and `#gaming` chat rooms. The chat uses a Supabase Postgres table with Realtime. No passwords or service-role keys are stored in this site.
 
 ## 1. Create a Supabase project
 
@@ -10,7 +10,7 @@ Set `KILLBYTE_SUPABASE_URL` and `KILLBYTE_SUPABASE_ANON_KEY` in [chat-config.js]
 
 ## 2. Create the chat table and access policies
 
-Open the Supabase SQL Editor and run the contents of [supabase-chat.sql](./supabase-chat.sql). This creates the messages table, enables row-level security, lets signed-in users read messages, and only lets a user post as their own account name.
+Open the Supabase SQL Editor and run the contents of [supabase-chat.sql](./supabase-chat.sql). This creates the messages table, adds the room column (existing messages stay in `#general`), enables row-level security, lets signed-in users read messages, and only lets a user post as their own account name. The SQL is safe to rerun on an existing chat table.
 
 ## 3. Enable live message updates
 

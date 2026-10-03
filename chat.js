@@ -5,22 +5,25 @@
   const setup = document.getElementById("chat-setup");
   const authPanel = document.getElementById("chat-auth");
   const chatPanel = document.getElementById("chat-panel");
-  const currentUser = document.getElementById("chat-current-user");
   const messagesList = document.getElementById("chat-messages");
   const composer = document.getElementById("chat-composer");
   const messageInput = document.getElementById("chat-message-input");
+  const roomButtons = Array.from(document.querySelectorAll(".chat-room-button[data-room]"));
 
-  if (!status || !setup || !authPanel || !chatPanel) return;
+  if (!status || !setup || !authPanel || !chatPanel || roomButtons.length === 0) return;
 
   let channel = null;
   let authSubscription = null;
   let activeUserId = null;
+  let activeRoom = "general";
+  let roomRequestId = 0;
   let messages = new Map();
   let disposed = false;
 
   const showStatus = (message, isError = false) => {
     status.textContent = message;
     status.dataset.error = String(isError);
+    status.hidden = !message;
   };
 
   const getDisplayName = (user) => {
@@ -89,40 +92,39 @@
       renderMessages();
     }
 
-    currentUser.textContent = getDisplayName(user);
     chatPanel.hidden = false;
     authPanel.hidden = true;
     setup.hidden = true;
 
     if (channel) return;
+    const room = activeRoom;
     const currentChannel = client
-      .channel("killbyte-general-messages")
+      .channel(`killbyte-${room}-messages`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "chat_messages" },
+        { event: "INSERT", schema: "public", table: "chat_messages", filter: `room=eq.${room}` },
         ({ new: message }) => {
-          if (disposed || !message?.id) return;
+          if (disposed || activeRoom !== room || !message?.id) return;
           messages.set(message.id, message);
           renderMessages();
         }
       )
       .subscribe((subscriptionStatus) => {
-        if (disposed) return;
+        if (disposed || activeRoom !== room) return;
         if (subscriptionStatus === "CHANNEL_ERROR" || subscriptionStatus === "TIMED_OUT") {
           showStatus("Live updates could not connect. Check Supabase Realtime setup and your connection.", true);
-        } else if (subscriptionStatus === "SUBSCRIBED") {
-          showStatus("Connected to #general.");
         }
       });
     channel = currentChannel;
 
     const { data, error } = await client
       .from("chat_messages")
-      .select("id, user_id, username, content, created_at")
+      .select("id, user_id, username, content, room, created_at")
+      .eq("room", room)
       .order("created_at", { ascending: false })
       .limit(100);
 
-    if (disposed || activeUserId !== user.id) return;
+    if (disposed || activeUserId !== user.id || activeRoom !== room) return;
     if (error) {
       showStatus(`Could not load chat messages: ${error.message}`, true);
       return;
@@ -145,6 +147,7 @@
     event.preventDefault();
     const content = messageInput.value.trim();
     if (!content || !activeUserId) return;
+    const room = activeRoom;
 
     let userResult;
     let userError;
@@ -169,8 +172,8 @@
     try {
       const { data, error } = await client
         .from("chat_messages")
-        .insert({ user_id: userResult.user.id, username, content })
-        .select("id, user_id, username, content, created_at")
+        .insert({ user_id: userResult.user.id, username, content, room })
+        .select("id, user_id, username, content, room, created_at")
         .single();
 
       if (error) {
@@ -178,10 +181,12 @@
         return;
       }
 
-      messages.set(data.id, data);
-      renderMessages();
+      if (activeRoom === room) {
+        messages.set(data.id, data);
+        renderMessages();
+      }
       messageInput.value = "";
-      showStatus("Message sent.");
+      showStatus("");
       messageInput.focus();
     } catch (error) {
       console.error("Could not send the chat message.", error);
@@ -193,11 +198,44 @@
   };
 
   const onBeforeNavigate = () => window.killbyteChatCleanup?.();
+  const onRoomSelect = async (event) => {
+    const selectedRoom = event.currentTarget.dataset.room;
+    if (selectedRoom === activeRoom) return;
+
+    activeRoom = selectedRoom;
+    roomRequestId += 1;
+    roomButtons.forEach((button) => {
+      button.setAttribute("aria-pressed", String(button.dataset.room === activeRoom));
+    });
+    chatPanel.setAttribute("aria-label", `${activeRoom} chat`);
+    messageInput.placeholder = `Message #${activeRoom}...`;
+    messages = new Map();
+    renderMessages();
+    showStatus("");
+
+    if (!activeUserId) return;
+    const requestId = roomRequestId;
+    try {
+      await stopRealtime();
+      if (disposed || requestId !== roomRequestId) return;
+      const { data, error } = await client.auth.getSession();
+      if (error) {
+        showStatus(`Could not check your account: ${error.message}`, true);
+        return;
+      }
+      if (disposed || requestId !== roomRequestId || !data.session?.user) return;
+      await startRealtime(data.session.user);
+    } catch (error) {
+      console.error("Could not switch chat rooms.", error);
+      showStatus("Could not switch rooms. Check your connection and try again.", true);
+    }
+  };
   const cleanup = () => {
     if (disposed) return;
     disposed = true;
     window.removeEventListener("killbyte:beforeNavigate", onBeforeNavigate);
     composer.removeEventListener("submit", onSendMessage);
+    roomButtons.forEach((button) => button.removeEventListener("click", onRoomSelect));
     if (authSubscription) authSubscription.unsubscribe();
     void stopRealtime();
     if (window.killbyteChatCleanup === cleanup) delete window.killbyteChatCleanup;
@@ -206,6 +244,9 @@
   window.killbyteChatCleanup = cleanup;
   window.addEventListener("killbyte:beforeNavigate", onBeforeNavigate);
   composer.addEventListener("submit", onSendMessage);
+  roomButtons.forEach((button) => button.addEventListener("click", onRoomSelect));
+  chatPanel.setAttribute("aria-label", `${activeRoom} chat`);
+  messageInput.placeholder = `Message #${activeRoom}...`;
 
   const client = window.KillbyteSupabaseClient;
   if (!client) {
@@ -237,7 +278,7 @@
         console.error("Could not clear the chat session.", error);
         showStatus("Could not finish signing out. Refresh the page and try again.", true);
       });
-      showStatus("Sign in to join #general.");
+      showStatus("Sign in to join chat.");
     }
   };
 
@@ -253,7 +294,7 @@
     }
     if (!data.session) {
       authPanel.hidden = false;
-      showStatus("Sign in to join #general.");
+      showStatus("Sign in to join chat.");
       return;
     }
     void handleAuthChange(data.session);

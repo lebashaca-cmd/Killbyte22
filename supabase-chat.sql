@@ -3,11 +3,19 @@ create table if not exists public.chat_messages (
   user_id uuid not null references auth.users (id) on delete cascade,
   username text not null check (char_length(username) between 1 and 32),
   content text not null check (char_length(content) between 1 and 1000),
+  room text not null default 'general' check (room in ('general', 'off-topic', 'gaming')),
   created_at timestamptz not null default now()
 );
 
+alter table public.chat_messages
+  add column if not exists room text not null default 'general'
+  check (room in ('general', 'off-topic', 'gaming'));
+
 create index if not exists chat_messages_created_at_idx
   on public.chat_messages (created_at desc);
+
+create index if not exists chat_messages_room_created_at_idx
+  on public.chat_messages (room, created_at desc);
 
 alter table public.chat_messages enable row level security;
 

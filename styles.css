@@ -1596,28 +1596,43 @@ iframe {
   border-bottom: 1px solid color-mix(in srgb, var(--neon-light) 35%, transparent);
 }
 
-.chat-header h1,
-.chat-header p,
-.chat-account-bar p {
-  margin: 0;
-}
-
-.chat-header h1 {
-  font-size: 1.45rem;
-}
-
-.chat-header p,
-.chat-account-bar p,
 .chat-caption {
   color: color-mix(in srgb, var(--neon-light) 70%, white);
   font-size: 0.9rem;
 }
 
+.chat-rooms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chat-room-button {
+  padding: 9px 13px;
+  border: 1px solid color-mix(in srgb, var(--neon-light) 60%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--neon-secondary) 12%, #080914);
+  color: color-mix(in srgb, var(--neon-light) 70%, white);
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.chat-room-button:hover,
+.chat-room-button:focus-visible,
+.chat-room-button[aria-pressed="true"] {
+  border-color: var(--neon-light);
+  background: linear-gradient(110deg, color-mix(in srgb, var(--neon-secondary) 65%, #101126), color-mix(in srgb, var(--neon-color) 30%, #101126));
+  color: white;
+}
+
+.chat-room-button:focus-visible {
+  outline: 2px solid var(--neon-color);
+  outline-offset: 2px;
+}
+
 .chat-beta-tag {
   flex: 0 0 auto;
-  padding: 5px 9px;
-  border: 1px solid var(--neon-color);
-  border-radius: 999px;
   color: white;
   font-size: 0.75rem;
   letter-spacing: 0.08em;
@@ -1625,10 +1640,13 @@ iframe {
 }
 
 .chat-status {
-  min-height: 24px;
   margin: 12px 22px 0;
   color: color-mix(in srgb, var(--neon-light) 70%, white);
   font-size: 0.9rem;
+}
+
+.chat-page .chat-status[hidden] {
+  display: none;
 }
 
 .chat-status[data-error="true"] {
@@ -1654,7 +1672,6 @@ iframe {
 }
 
 .chat-auth-tabs button,
-.chat-account-bar button,
 .chat-send-button {
   border: 1px solid var(--neon-light);
   border-radius: 8px;
@@ -1797,6 +1814,11 @@ iframe {
   .chat-header,
   .chat-account-bar {
     padding: 14px;
+  }
+
+  .chat-room-button {
+    padding: 8px 10px;
+    font-size: 0.88rem;
   }
 
   .chat-messages {
