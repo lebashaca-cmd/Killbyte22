@@ -16,7 +16,7 @@ services:
         fromService:
           type: web
           name: killbyte-uv-wisp
-          property: host
+          property: url
     headers:
       - path: /sw.js
         name: Cache-Control
