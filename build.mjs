@@ -8,6 +8,8 @@ const siteFiles = [
   "About.html",
   "Games.html",
   "Links.html",
+  "Media.html",
+  "Music.html",
   "browser.html",
   "browser.js",
   "context-menu.js",

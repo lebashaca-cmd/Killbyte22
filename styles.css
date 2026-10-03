@@ -1403,3 +1403,29 @@ iframe {
     padding: 44px 12px 16px;
   }
 }
+
+.page-nav > .sidebar-beta-section {
+  display: none;
+}
+
+.sidebar-layout .page-nav > .sidebar-beta-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-layout .page-nav .sidebar-nav-beta {
+  margin: 0 8px;
+  color: color-mix(in srgb, var(--neon-light) 70%, white);
+  font-size: 15px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.sidebar-layout .page-nav .sidebar-nav-divider {
+  display: block;
+  width: auto;
+  margin: 0 8px;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--neon-light) 35%, transparent);
+}
