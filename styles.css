@@ -309,6 +309,7 @@ body > :not(.background-layer):not(.page-nav):not(.context-menu):not(.battery-in
   width: 224px;
   max-width: none;
   padding: 20px 12px;
+  padding-bottom: 220px;
   transform: none;
   border-width: 0 1px 0 0;
   border-color: color-mix(in srgb, var(--neon-light) 75%, transparent);
@@ -455,6 +456,7 @@ body > :not(.background-layer):not(.page-nav):not(.context-menu):not(.battery-in
     width: 100%;
     height: auto;
     max-height: 58px;
+    padding: 7px;
     flex-direction: row;
     align-items: center;
     overflow-x: auto;

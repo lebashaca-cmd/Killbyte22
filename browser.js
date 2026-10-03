@@ -126,7 +126,7 @@
       proxiedFrame = controller.createFrame(frameElement);
       frameReady = true;
       status.textContent = "Ready";
-      navigate(initialUrl || "https://example.com");
+      navigate(initialUrl || "https://google.com");
     } catch (error) {
       console.error("Scramjet browser could not start.", error);
       status.textContent = `Browser startup failed: ${error.message}`;
