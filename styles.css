@@ -922,6 +922,49 @@ iframe .Scrollingbox {
   margin-top: 0;
 }
 
+.settings-tabs {
+  display: flex;
+  gap: 10px;
+  margin: 14px 0 12px;
+}
+
+.settings-tab {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 7px 13px;
+  border: 1px solid color-mix(in srgb, var(--neon-secondary) 40%, transparent);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--neon-secondary) 8%, #080914);
+  color: color-mix(in srgb, var(--neon-light) 70%, white);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
+}
+
+.settings-tab:hover,
+.settings-tab:focus-visible {
+  border-color: color-mix(in srgb, var(--neon-light) 45%, transparent);
+  outline: none;
+}
+
+.settings-tab[aria-selected="true"] {
+  border-color: var(--neon-light);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--neon-secondary) 32%, #211421), color-mix(in srgb, var(--neon-color) 20%, #0f0c14));
+  color: white;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--neon-color) 22%, transparent);
+}
+
+.settings-tab-panel[hidden] {
+  display: none;
+}
+
+.settings-tab-panel > .settings-panel {
+  width: 100%;
+  margin: 12px 0;
+}
+
 .background-theme-picker {
   position: relative;
 }

@@ -1,6 +1,30 @@
 window.initializeKillbytePageSettings = () => {
   const root = document.documentElement;
 
+  const settingsTabs = Array.from(document.querySelectorAll(".settings-tab[role='tab']"));
+  const activateSettingsTab = (tab, focus = false) => {
+    settingsTabs.forEach((entry) => {
+      const selected = entry === tab;
+      entry.setAttribute("aria-selected", String(selected));
+      entry.tabIndex = selected ? 0 : -1;
+      document.getElementById(entry.getAttribute("aria-controls")).hidden = !selected;
+    });
+    if (focus) tab.focus();
+  };
+  settingsTabs.forEach((tab, index) => {
+    tab.addEventListener("click", () => activateSettingsTab(tab));
+    tab.addEventListener("keydown", (event) => {
+      let nextIndex;
+      if (event.key === "ArrowRight") nextIndex = (index + 1) % settingsTabs.length;
+      if (event.key === "ArrowLeft") nextIndex = (index - 1 + settingsTabs.length) % settingsTabs.length;
+      if (event.key === "Home") nextIndex = 0;
+      if (event.key === "End") nextIndex = settingsTabs.length - 1;
+      if (nextIndex === undefined) return;
+      event.preventDefault();
+      activateSettingsTab(settingsTabs[nextIndex], true);
+    });
+  });
+
   const siteFonts = {
     trebuchet: '"Trebuchet MS", "Segoe UI", sans-serif',
     arial: "Arial, sans-serif",
