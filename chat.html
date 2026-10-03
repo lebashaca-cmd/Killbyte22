@@ -7,9 +7,10 @@
     <link rel="stylesheet" href="styles.css" />
     <script src="context-menu.js" defer></script>
     <script src="site-settings.js" defer></script>
-    <script src="navigation.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="chat-config.js" defer></script>
+    <script src="account.js" defer></script>
+    <script src="navigation.js" defer></script>
     <script src="chat.js" defer></script>
   </head>
   <body class="details-page chat-page">
@@ -51,32 +52,14 @@
 
       <section id="chat-auth" class="box chat-auth" hidden>
         <h2>Your account</h2>
-        <p class="chat-caption">Sign in or create an account to join the live chat.</p>
-        <div class="chat-auth-tabs" role="tablist" aria-label="Account action">
-          <button id="chat-signin-tab" type="button" role="tab" aria-selected="true">Sign in</button>
-          <button id="chat-signup-tab" type="button" role="tab" aria-selected="false">Create account</button>
-        </div>
-        <form id="chat-auth-form">
-          <label id="chat-name-field" hidden>
-            Display name
-            <input id="chat-display-name" name="displayName" type="text" minlength="2" maxlength="32" autocomplete="nickname" />
-          </label>
-          <label>
-            Email
-            <input id="chat-email" name="email" type="email" autocomplete="email" required maxlength="254" />
-          </label>
-          <label>
-            Password
-            <input id="chat-password" name="password" type="password" autocomplete="current-password" required minlength="8" maxlength="72" />
-          </label>
-          <button id="chat-auth-submit" class="enter-button" type="submit">Sign in</button>
-        </form>
+        <p class="chat-caption">Sign in to your Killbyte account to join the live chat.</p>
+        <a class="enter-button" href="account.html">Sign in or create an account</a>
       </section>
 
       <section id="chat-panel" class="chat-panel" aria-label="General chat" hidden>
         <div class="chat-account-bar">
           <p>Signed in as <strong id="chat-current-user"></strong></p>
-          <button id="chat-signout" type="button">Sign out</button>
+          <a class="enter-button" href="account.html">Account</a>
         </div>
         <ol id="chat-messages" class="chat-messages" aria-live="polite" aria-relevant="additions"></ol>
         <form id="chat-composer" class="chat-composer">

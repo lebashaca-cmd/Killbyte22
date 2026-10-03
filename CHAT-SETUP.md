@@ -1,6 +1,6 @@
 # Setting up Killbyte Chat
 
-Killbyte Chat uses Supabase Auth for accounts and a Supabase Postgres table with Realtime for the shared `#general` room. No passwords or service-role keys are stored in this site.
+Killbyte accounts use Supabase Auth across the whole site. Visitors can browse without an account; signing in is required to use the shared `#general` chat. The chat uses a Supabase Postgres table with Realtime. No passwords or service-role keys are stored in this site.
 
 ## 1. Create a Supabase project
 
@@ -18,10 +18,10 @@ In Supabase, open **Database → Publications**, select `supabase_realtime`, and
 
 ## 4. Configure account email redirects
 
-In **Authentication → URL Configuration**, set the Site URL to the deployed Killbyte site and add its chat page to the allowed redirect URLs if needed. For local development, allow the local origin you use to serve the site. If email confirmation is enabled, new users must confirm their email before signing in.
+In **Authentication → URL Configuration**, set the Site URL to the deployed Killbyte site and add its account page to the allowed redirect URLs if needed. For local development, allow the local origin you use to serve the site. If email confirmation is enabled, new users must confirm their email before signing in.
 
 ## 5. Build and deploy
 
-Run `npm run build` and deploy the generated `dist` directory as usual. `chat-config.js` is included in the static build. Test by creating two accounts in separate browsers and sending messages between them.
+Run `npm run build` and deploy the generated `dist` directory as usual. The **Account** link appears in the main navigation on every page; users can create an account or sign in there, then use the same session in Chat. Test by creating two accounts in separate browsers and sending messages between them.
 
 The browser app intentionally does not offer guest chat or store passwords itself. Supabase handles account sessions; the public database key is safe to expose only because the table policies restrict access to authenticated users.

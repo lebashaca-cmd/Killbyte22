@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Account - Killbyte</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="chat-config.js" defer></script>
+    <script src="account.js" defer></script>
+    <script src="context-menu.js" defer></script>
+    <script src="site-settings.js" defer></script>
+    <script src="navigation.js" defer></script>
+  </head>
+  <body class="details-page account-page">
+    <nav class="page-nav" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="Links.html">Links</a>
+      <a href="Games.html">Games</a>
+      <a href="browser.html">Browser</a>
+      <a href="settings.html">Settings</a>
+      <div class="sidebar-beta-section">
+        <h4 class="sidebar-nav-beta">Beta</h4>
+        <hr class="sidebar-nav-divider" aria-hidden="true" />
+        <a href="chat.html">Chat</a>
+        <a href="Media.html">Media</a>
+        <a href="Music.html">Music</a>
+      </div>
+    </nav>
+    <main class="box account-shell">
+      <h1>Your account</h1>
+      <p class="account-intro">One account for Killbyte. The rest of the site stays open to everyone.</p>
+      <p id="account-status" class="account-status" role="status" aria-live="polite"></p>
+
+      <section id="account-setup" class="box account-card" hidden>
+        <h2>Connect accounts</h2>
+        <p>To turn on accounts, configure the Supabase project URL and public key in <code>chat-config.js</code>. See the <a href="CHAT-SETUP.md">setup guide</a>.</p>
+      </section>
+
+      <section id="account-auth" class="box account-card" hidden>
+        <div class="account-tabs" role="tablist" aria-label="Account action">
+          <button id="account-signin-tab" type="button" role="tab" aria-selected="true">Sign in</button>
+          <button id="account-signup-tab" type="button" role="tab" aria-selected="false">Create account</button>
+        </div>
+        <form id="account-form">
+          <label id="account-name-field" hidden>
+            Display name
+            <input id="account-display-name" name="displayName" type="text" minlength="2" maxlength="32" autocomplete="nickname" />
+          </label>
+          <label>
+            Email
+            <input id="account-email" name="email" type="email" autocomplete="email" required maxlength="254" />
+          </label>
+          <label>
+            Password
+            <input id="account-password" name="password" type="password" autocomplete="current-password" required minlength="8" maxlength="72" />
+          </label>
+          <button id="account-submit" class="enter-button" type="submit">Sign in</button>
+        </form>
+      </section>
+
+      <section id="account-profile" class="box account-card" hidden>
+        <p>Signed in as <strong id="account-profile-name"></strong></p>
+        <p>Email: <span id="account-profile-email"></span></p>
+        <button id="account-signout" class="enter-button" type="button">Sign out</button>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,6 +1,13 @@
 (() => {
   const sharedBodyElements = ".page-nav, .orb-field, .background-layer, .battery-indicator, .clock-indicator, .context-menu";
-  const sharedScripts = new Set(["context-menu.js", "site-settings.js", "navigation.js"]);
+  const sharedScripts = new Set([
+    "account.js",
+    "chat-config.js",
+    "context-menu.js",
+    "navigation.js",
+    "site-settings.js",
+    "supabase-js@2",
+  ]);
   let navigationId = 0;
 
   function updateNavigation(url) {
@@ -71,6 +78,7 @@
       updateNavigation(new URL(url, location.href));
 
       window.initializeKillbytePageSettings?.();
+      window.initializeKillbyteAccountPage?.();
       await runPageScripts(parsedPage, url, requestId);
       if (requestId !== navigationId) return;
       window.scrollTo(0, 0);

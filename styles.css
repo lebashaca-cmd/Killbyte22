@@ -1478,6 +1478,98 @@ iframe {
   display: none !important;
 }
 
+.account-page [hidden] {
+  display: none !important;
+}
+
+.account-page {
+  align-items: flex-start;
+}
+
+.account-shell {
+  width: min(100%, 540px);
+  text-align: left;
+}
+
+.account-shell h1 {
+  margin-top: 0;
+}
+
+.account-intro,
+.account-status {
+  color: color-mix(in srgb, var(--neon-light) 70%, white);
+}
+
+.account-status {
+  min-height: 24px;
+}
+
+.account-status[data-error="true"] {
+  color: #ff8a9a;
+}
+
+.account-card {
+  padding: 22px;
+}
+
+.account-card h2,
+.account-card p:first-child {
+  margin-top: 0;
+}
+
+.account-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.account-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
+.account-card input {
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid color-mix(in srgb, var(--neon-light) 60%, transparent);
+  border-radius: 8px;
+  background: #080914;
+  color: white;
+  font: inherit;
+}
+
+.account-card input:focus {
+  outline: 2px solid var(--neon-color);
+  outline-offset: 2px;
+}
+
+.account-card .enter-button {
+  width: 100%;
+  cursor: pointer;
+}
+
+.account-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.account-tabs button {
+  border: 1px solid var(--neon-light);
+  border-radius: 8px;
+  padding: 9px 13px;
+  background: color-mix(in srgb, var(--neon-secondary) 18%, #080914);
+  color: white;
+  font: inherit;
+  cursor: pointer;
+}
+
+.account-tabs button[aria-selected="true"] {
+  background: linear-gradient(110deg, var(--neon-secondary), color-mix(in srgb, var(--neon-color) 70%, #18102b));
+}
+
 .chat-page {
   align-items: stretch;
   padding-top: 100px;

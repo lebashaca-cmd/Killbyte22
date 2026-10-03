@@ -5,23 +5,13 @@
   const setup = document.getElementById("chat-setup");
   const authPanel = document.getElementById("chat-auth");
   const chatPanel = document.getElementById("chat-panel");
-  const authForm = document.getElementById("chat-auth-form");
-  const nameField = document.getElementById("chat-name-field");
-  const nameInput = document.getElementById("chat-display-name");
-  const emailInput = document.getElementById("chat-email");
-  const passwordInput = document.getElementById("chat-password");
-  const authSubmit = document.getElementById("chat-auth-submit");
-  const signInTab = document.getElementById("chat-signin-tab");
-  const signUpTab = document.getElementById("chat-signup-tab");
   const currentUser = document.getElementById("chat-current-user");
-  const signOutButton = document.getElementById("chat-signout");
   const messagesList = document.getElementById("chat-messages");
   const composer = document.getElementById("chat-composer");
   const messageInput = document.getElementById("chat-message-input");
 
   if (!status || !setup || !authPanel || !chatPanel) return;
 
-  let mode = "signin";
   let channel = null;
   let authSubscription = null;
   let activeUserId = null;
@@ -38,17 +28,6 @@
     const fallbackName = user.email?.split("@")[0] || "Member";
     const name = typeof metadataName === "string" && metadataName.trim() ? metadataName.trim() : fallbackName;
     return Array.from(name).slice(0, 32).join("");
-  };
-
-  const setMode = (nextMode) => {
-    mode = nextMode;
-    const signingUp = mode === "signup";
-    nameField.hidden = !signingUp;
-    nameInput.required = signingUp;
-    passwordInput.autocomplete = signingUp ? "new-password" : "current-password";
-    authSubmit.textContent = signingUp ? "Create account" : "Sign in";
-    signInTab.setAttribute("aria-selected", String(!signingUp));
-    signUpTab.setAttribute("aria-selected", String(signingUp));
   };
 
   const renderMessages = () => {
@@ -160,66 +139,6 @@
     messagesList.replaceChildren();
     chatPanel.hidden = true;
     authPanel.hidden = false;
-    setMode("signin");
-  };
-
-  const onAuthSubmit = async (event) => {
-    event.preventDefault();
-    authSubmit.disabled = true;
-
-    try {
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
-      let result;
-
-      if (mode === "signup") {
-        const displayName = nameInput.value.trim();
-        if (displayName.length < 2) {
-          showStatus("Display names must be at least 2 characters.", true);
-          return;
-        }
-        result = await client.auth.signUp({
-          email,
-          password,
-          options: { data: { display_name: displayName } }
-        });
-      } else {
-        result = await client.auth.signInWithPassword({ email, password });
-      }
-
-      if (result.error) {
-        showStatus(result.error.message, true);
-      } else if (mode === "signup" && !result.data.session) {
-        showStatus("Account created. Check your email to confirm it, then sign in.");
-        setMode("signin");
-        passwordInput.value = "";
-      } else {
-        showStatus(mode === "signup" ? "Account created. Welcome to #general!" : "Signed in.");
-        authForm.reset();
-      }
-    } catch (error) {
-      console.error("Could not complete the account request.", error);
-      showStatus("The account request failed. Check your connection and try again.", true);
-    } finally {
-      authSubmit.disabled = false;
-    }
-  };
-
-  const onSignOut = async () => {
-    signOutButton.disabled = true;
-    try {
-      const { error } = await client.auth.signOut();
-      if (error) {
-        showStatus(`Could not sign out: ${error.message}`, true);
-        return;
-      }
-      showStatus("You are signed out.");
-    } catch (error) {
-      console.error("Could not sign out.", error);
-      showStatus("Could not sign out. Check your connection and try again.", true);
-    } finally {
-      signOutButton.disabled = false;
-    }
   };
 
   const onSendMessage = async (event) => {
@@ -278,8 +197,6 @@
     if (disposed) return;
     disposed = true;
     window.removeEventListener("killbyte:beforeNavigate", onBeforeNavigate);
-    authForm.removeEventListener("submit", onAuthSubmit);
-    signOutButton.removeEventListener("click", onSignOut);
     composer.removeEventListener("submit", onSendMessage);
     if (authSubscription) authSubscription.unsubscribe();
     void stopRealtime();
@@ -288,34 +205,25 @@
 
   window.killbyteChatCleanup = cleanup;
   window.addEventListener("killbyte:beforeNavigate", onBeforeNavigate);
-  signInTab.addEventListener("click", () => setMode("signin"));
-  signUpTab.addEventListener("click", () => setMode("signup"));
-  authForm.addEventListener("submit", onAuthSubmit);
-  signOutButton.addEventListener("click", onSignOut);
   composer.addEventListener("submit", onSendMessage);
-  setMode("signin");
 
-  const supabaseUrl = window.KILLBYTE_SUPABASE_URL;
-  const supabaseAnonKey = window.KILLBYTE_SUPABASE_ANON_KEY;
-  const hasConfiguration =
-    typeof supabaseUrl === "string" &&
-    /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(supabaseUrl) &&
-    typeof supabaseAnonKey === "string" &&
-    supabaseAnonKey.length > 20 &&
-    supabaseAnonKey !== "YOUR_SUPABASE_ANON_KEY";
-
-  if (!hasConfiguration) {
+  const client = window.KillbyteSupabaseClient;
+  if (!client) {
+    const hasConfiguration =
+      typeof window.KILLBYTE_SUPABASE_URL === "string" &&
+      /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(window.KILLBYTE_SUPABASE_URL) &&
+      typeof window.KILLBYTE_SUPABASE_ANON_KEY === "string" &&
+      window.KILLBYTE_SUPABASE_ANON_KEY.length > 20 &&
+      window.KILLBYTE_SUPABASE_ANON_KEY !== "YOUR_SUPABASE_ANON_KEY";
     setup.hidden = false;
-    showStatus("Chat is not connected yet. Finish the Supabase setup to enable it.", true);
+    showStatus(
+      hasConfiguration
+        ? "The account service did not load. Check your connection and refresh this page."
+        : "Chat is not connected yet. Finish the Supabase setup to enable it.",
+      true
+    );
     return;
   }
-
-  if (!window.supabase?.createClient) {
-    showStatus("The chat client could not load. Refresh the page or check your connection.", true);
-    return;
-  }
-
-  const client = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
 
   const handleAuthChange = (session) => {
     if (disposed) return;
