@@ -85,11 +85,11 @@
               <button type="button" data-emoji="💀" aria-label="Skull">💀</button>
             </div>
             <div id="chat-gif-panel" class="chat-gif-panel" hidden>
-              <form id="chat-gif-search" class="chat-gif-search">
+              <div id="chat-gif-search" class="chat-gif-search" role="search">
                 <label class="visually-hidden" for="chat-gif-query">Search GIFs</label>
                 <input id="chat-gif-query" type="search" maxlength="80" placeholder="Search GIFs..." />
-                <button type="submit">Search</button>
-              </form>
+                <button id="chat-gif-search-button" type="button">Search</button>
+              </div>
               <p id="chat-gif-status" class="chat-gif-status" role="status" aria-live="polite"></p>
               <div id="chat-gif-results" class="chat-gif-results" aria-label="GIF search results"></div>
               <a class="chat-klipy-attribution" href="https://klipy.com/" target="_blank" rel="noopener noreferrer">GIFs powered by KLIPY</a>

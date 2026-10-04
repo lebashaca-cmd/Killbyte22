@@ -14,7 +14,7 @@
   const imageButton = document.getElementById("chat-image-button");
   const imageInput = document.getElementById("chat-image-input");
   const attachmentName = document.getElementById("chat-attachment-name");
-  const gifSearchForm = document.getElementById("chat-gif-search");
+  const gifSearchButton = document.getElementById("chat-gif-search-button");
   const gifQuery = document.getElementById("chat-gif-query");
   const gifResults = document.getElementById("chat-gif-results");
   const gifStatus = document.getElementById("chat-gif-status");
@@ -622,10 +622,14 @@
     messageInput.focus();
   };
 
-  const onGifSearch = (event) => {
-    event.preventDefault();
+  const runGifSearch = () => {
     const query = gifQuery.value.trim();
     if (query) void searchGifs(query);
+  };
+  const onGifSearchKeyDown = (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    runGifSearch();
   };
 
   const onBeforeNavigate = () => window.killbyteChatCleanup?.();
@@ -681,7 +685,8 @@
     emojiPanel.removeEventListener("click", onEmojiClick);
     imageButton.removeEventListener("click", onImageButtonClick);
     imageInput.removeEventListener("change", onImageSelected);
-    gifSearchForm.removeEventListener("submit", onGifSearch);
+    gifSearchButton.removeEventListener("click", runGifSearch);
+    gifQuery.removeEventListener("keydown", onGifSearchKeyDown);
     messagesList.removeEventListener("click", onAuthorClick);
     profileDialog?.querySelector(".user-profile-close").removeEventListener("click", onCloseProfile);
     profileDialog?.removeEventListener("click", onProfileBackdropClick);
@@ -706,7 +711,8 @@
   emojiPanel.addEventListener("click", onEmojiClick);
   imageButton.addEventListener("click", onImageButtonClick);
   imageInput.addEventListener("change", onImageSelected);
-  gifSearchForm.addEventListener("submit", onGifSearch);
+  gifSearchButton.addEventListener("click", runGifSearch);
+  gifQuery.addEventListener("keydown", onGifSearchKeyDown);
   document.addEventListener("keydown", onKeyDown);
   messagesList.addEventListener("click", onAuthorClick);
   profileDialog?.querySelector(".user-profile-close").addEventListener("click", onCloseProfile);
