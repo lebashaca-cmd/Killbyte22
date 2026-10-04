@@ -95,12 +95,12 @@
               <a class="chat-klipy-attribution" href="https://klipy.com/" target="_blank" rel="noopener noreferrer">GIFs powered by KLIPY</a>
             </div>
           </section>
-          <input id="chat-image-input" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/gif,image/webp" />
+          <input id="chat-image-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp" hidden />
           <p id="chat-attachment-name" class="chat-attachment-name" hidden></p>
-          <label class="visually-hidden" for="chat-message-input">Message in chat room</label>
           <input
             id="chat-message-input"
             class="chat-message-input"
+            aria-label="Message in chat room"
             name="message"
             type="text"
             maxlength="1000"
