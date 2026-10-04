@@ -43,25 +43,24 @@
     if (!client || !currentUser) return;
 
     if (currentRoleUserId === currentUser.id) {
-      link.hidden = !["admin", "owner"].includes(currentRole);
+      link.hidden = !currentRole.some((role) => ["admin", "owner"].includes(role));
     } else if (roleLoadUserId !== currentUser.id) {
       const userId = currentUser.id;
       const request = client
-        .from("user_roles")
+        .from("user_role_assignments")
         .select("role")
         .eq("user_id", userId)
-        .maybeSingle()
         .then(({ data, error }) => {
           if (error) throw error;
           if (currentUser?.id === userId) {
-            currentRole = data?.role || null;
+            currentRole = data.map((entry) => entry.role);
             currentRoleUserId = userId;
           }
         })
         .catch((error) => {
           console.error("Could not check account role.", error);
           if (currentUser?.id === userId) {
-            currentRole = null;
+            currentRole = [];
             currentRoleUserId = userId;
           }
         });
@@ -422,7 +421,7 @@
       window.setTimeout(() => {
         currentUser = session?.user || null;
         if (!currentUser || currentUser.id !== currentRoleUserId) {
-          currentRole = null;
+          currentRole = [];
           currentRoleUserId = null;
         }
         if (!currentUser || currentUser.id !== profileLoadedUserId) profileLoadedUserId = null;
@@ -439,7 +438,7 @@
       }
       currentUser = data.session?.user || null;
       if (!currentUser || currentUser.id !== currentRoleUserId) {
-        currentRole = null;
+        currentRole = [];
         currentRoleUserId = null;
       }
       if (!currentUser || currentUser.id !== profileLoadedUserId) profileLoadedUserId = null;

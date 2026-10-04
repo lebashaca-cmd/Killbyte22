@@ -64,7 +64,7 @@
               .select("user_id, display_name, bio, avatar_url, banner_url")
               .in("user_id", requestedIds),
             client
-              .from("user_roles")
+              .from("user_role_assignments")
               .select("user_id, role")
               .in("user_id", requestedIds)
           ]);
@@ -72,10 +72,14 @@
           if (roleResult.error) throw roleResult.error;
           requestedIds.forEach((id) => {
             profileCache.set(id, null);
-            roleCache.set(id, "member");
+            roleCache.set(id, []);
           });
           profileResult.data.forEach((profile) => profileCache.set(profile.user_id, profile));
-          roleResult.data.forEach((entry) => roleCache.set(entry.user_id, entry.role));
+          roleResult.data.forEach((entry) => {
+            const roles = roleCache.get(entry.user_id) || [];
+            roles.push(entry.role);
+            roleCache.set(entry.user_id, roles);
+          });
           if (!disposed) renderMessages();
           return true;
         } catch (error) {
@@ -99,7 +103,10 @@
     if (!(await loadProfiles([userId])) || disposed) return;
 
     const profile = profileCache.get(userId);
-    const role = roleCache.get(userId) || "member";
+    const assignedRoles = roleCache.get(userId) || [];
+    const roles = (assignedRoles.length ? assignedRoles : ["member"])
+      .sort((first, second) => ["owner", "admin", "beta", "member"].indexOf(first) -
+        ["owner", "admin", "beta", "member"].indexOf(second));
     const displayName = profile?.display_name || fallbackName || "Member";
     const avatar = document.getElementById("chat-user-profile-avatar");
     const initial = document.getElementById("chat-user-profile-initial");
@@ -108,10 +115,16 @@
     const bannerUrl = getSafeImageUrl(profile?.banner_url);
     const profileName = document.getElementById("chat-user-profile-name");
     profileName.textContent = displayName;
-    profileName.dataset.role = role;
-    const roleTag = document.getElementById("chat-user-profile-role");
-    roleTag.textContent = role === "owner" ? "Owner" : role === "admin" ? "Admin" : "Member";
-    roleTag.dataset.role = role;
+    profileName.dataset.role = roles.includes("owner") ? "owner" : roles.includes("admin") ? "admin" : "member";
+    const rolesList = document.getElementById("chat-user-profile-roles");
+    rolesList.replaceChildren();
+    roles.forEach((role) => {
+      const tag = document.createElement("span");
+      tag.className = "profile-role-tag";
+      tag.dataset.role = role;
+      tag.textContent = role.charAt(0).toUpperCase() + role.slice(1);
+      rolesList.appendChild(tag);
+    });
     document.getElementById("chat-user-profile-bio").textContent =
       profile?.bio || (profile ? "No bio yet." : "This user has not set up a public profile yet.");
     avatar.hidden = !avatarUrl;
@@ -157,12 +170,13 @@
       const metadata = document.createElement("div");
       metadata.className = "chat-message-meta";
       const profile = profileCache.get(message.user_id);
-      const role = roleCache.get(message.user_id) || "member";
+      const roles = roleCache.get(message.user_id) || [];
+      const glowRole = roles.includes("owner") ? "owner" : roles.includes("admin") ? "admin" : "member";
       const displayName = profile?.display_name || message.username;
       const author = document.createElement("button");
       author.type = "button";
       author.className = "chat-message-author";
-      author.dataset.role = role;
+      author.dataset.role = glowRole;
       author.dataset.userId = message.user_id;
       author.dataset.username = message.username;
       author.setAttribute("aria-label", `View ${displayName}'s profile`);

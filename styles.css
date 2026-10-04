@@ -1982,9 +1982,26 @@ iframe {
   overflow-wrap: anywhere;
 }
 
+.user-profile-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  margin-bottom: 14px;
+}
+
+.user-profile-heading h2 {
+  margin: 0;
+}
+
+.profile-role-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
 .profile-role-tag {
   display: inline-block;
-  margin: 0 0 14px;
   padding: 4px 9px;
   border: 1px solid color-mix(in srgb, var(--neon-light) 45%, transparent);
   border-radius: 999px;

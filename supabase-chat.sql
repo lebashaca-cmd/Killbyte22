@@ -38,6 +38,41 @@ create table if not exists public.user_roles (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.user_role_assignments (
+  user_id uuid not null references auth.users (id) on delete cascade,
+  role text not null check (role in ('owner', 'admin', 'beta', 'member')),
+  created_at timestamptz not null default now(),
+  primary key (user_id, role)
+);
+
+create or replace function public.assign_default_member_role()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  insert into public.user_role_assignments (user_id, role)
+  values (new.id, 'member')
+  on conflict (user_id, role) do nothing;
+  return new;
+end;
+$$;
+
+revoke all on function public.assign_default_member_role() from public, anon, authenticated;
+
+drop trigger if exists on_auth_user_created_assign_member on auth.users;
+create trigger on_auth_user_created_assign_member
+  after insert on auth.users
+  for each row execute function public.assign_default_member_role();
+
+insert into public.user_role_assignments (user_id, role)
+select user_id, role
+from public.user_roles
+on conflict (user_id, role) do nothing;
+
+delete from public.user_roles;
+
 alter table public.chat_messages
   add column if not exists room text not null default 'general'
   check (room in ('general', 'off-topic', 'gaming'));
@@ -51,8 +86,11 @@ create index if not exists chat_messages_room_created_at_idx
 alter table public.chat_messages enable row level security;
 alter table public.user_profiles enable row level security;
 alter table public.user_roles enable row level security;
+alter table public.user_role_assignments enable row level security;
 revoke all on public.user_roles from anon, authenticated;
 grant select on public.user_roles to authenticated;
+revoke all on public.user_role_assignments from anon, authenticated;
+grant select on public.user_role_assignments to authenticated;
 
 drop policy if exists "Signed-in users can read profiles" on public.user_profiles;
 create policy "Signed-in users can read profiles"
@@ -79,6 +117,13 @@ create policy "Users can update their own profile"
 drop policy if exists "Signed-in users can read account roles" on public.user_roles;
 create policy "Signed-in users can read account roles"
   on public.user_roles
+  for select
+  to authenticated
+  using (true);
+
+drop policy if exists "Signed-in users can read role assignments" on public.user_role_assignments;
+create policy "Signed-in users can read role assignments"
+  on public.user_role_assignments
   for select
   to authenticated
   using (true);

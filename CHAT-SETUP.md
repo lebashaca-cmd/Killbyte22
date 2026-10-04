@@ -10,20 +10,21 @@ Set `KILLBYTE_SUPABASE_URL` and `KILLBYTE_SUPABASE_ANON_KEY` in [chat-config.js]
 
 ## 2. Create the chat table and access policies
 
-Open the Supabase SQL Editor and run the contents of [supabase-chat.sql](./supabase-chat.sql). This creates or upgrades the messages, public profile, and role tables, sets up public profile-image storage (JPEG, PNG, GIF, or WebP up to 5 MB), adds the room column (existing messages stay in `#general`), enables row-level security, lets signed-in users read messages, profiles, and role labels, and only lets users manage their own profiles or post as their own account name. Roles cannot be assigned from the browser; an owner must assign them in the SQL Editor. Existing accounts can add profile details from the Account page. The SQL is safe to rerun on an existing chat table.
+Open the Supabase SQL Editor and run the contents of [supabase-chat.sql](./supabase-chat.sql). This creates or upgrades the messages, public profile, and role tables, automatically assigns the Member role to new signups, sets up public profile-image storage (JPEG, PNG, GIF, or WebP up to 5 MB), adds the room column (existing messages stay in `#general`), enables row-level security, lets signed-in users read messages, profiles, and role labels, and only lets users manage their own profiles or post as their own account name. Users can have multiple role tags. Roles cannot be assigned from the browser; assign additional roles in the SQL Editor. Existing accounts can add profile details from the Account page. The SQL is safe to rerun on an existing chat table.
 
 To make an account an owner, find its UUID in **Authentication → Users**, then run this in the SQL Editor (replace the UUID):
 
 ```sql
-insert into public.user_roles (user_id, role)
+insert into public.user_role_assignments (user_id, role)
 values ('YOUR_AUTH_USER_UUID', 'owner')
-on conflict (user_id) do update set role = excluded.role;
+on conflict (user_id, role) do nothing;
 ```
 
-Use `'admin'` instead of `'owner'` to grant admin access. To remove an assigned role:
+Use `'admin'`, `'beta'`, or `'member'` to assign another tag. An account may have multiple role rows. Only `'admin'` and `'owner'` grant access to the Admin panel. To remove an assigned role:
 
 ```sql
-delete from public.user_roles where user_id = 'YOUR_AUTH_USER_UUID';
+delete from public.user_role_assignments
+where user_id = 'YOUR_AUTH_USER_UUID' and role = 'owner';
 ```
 
 ## 3. Enable live message updates

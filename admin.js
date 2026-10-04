@@ -23,25 +23,25 @@
 
     try {
       const { data, error } = await client
-        .from("user_roles")
+        .from("user_role_assignments")
         .select("role")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
+        .eq("user_id", session.user.id);
       if (error) throw error;
       if (disposed) return;
-      if (!data || !["admin", "owner"].includes(data.role)) {
+      const userRoles = data.map((entry) => entry.role);
+      if (!userRoles.some((role) => ["admin", "owner"].includes(role))) {
         showStatus("This panel is only available to admins and owners.", true);
         return;
       }
 
       const { data: roles, error: rolesError } = await client
-        .from("user_roles")
+        .from("user_role_assignments")
         .select("role");
       if (rolesError) throw rolesError;
       if (disposed) return;
 
       document.getElementById("admin-current-role").textContent =
-        data.role === "owner" ? "Owner" : "Admin";
+        userRoles.includes("owner") ? "Owner" : "Admin";
       document.getElementById("admin-count").textContent =
         String(roles.filter((entry) => entry.role === "admin").length);
       document.getElementById("owner-count").textContent =
