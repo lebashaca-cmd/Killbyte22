@@ -289,3 +289,10 @@ create policy "Users can post as their own account"
       32
     )
   );
+
+drop policy if exists "Users can delete their own chat messages" on public.chat_messages;
+create policy "Users can delete their own chat messages"
+  on public.chat_messages
+  for delete
+  to authenticated
+  using (auth.uid() = user_id);

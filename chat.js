@@ -299,6 +299,7 @@
       const item = document.createElement("li");
       item.className = "chat-message";
       item.dataset.own = String(message.user_id === activeUserId);
+      item.dataset.messageId = String(message.id);
 
       const metadata = document.createElement("div");
       metadata.className = "chat-message-meta";
@@ -420,6 +421,18 @@
         ({ new: message }) => {
           if (disposed || activeRoom !== room || !message?.id) return;
           messages.set(message.id, message);
+          renderMessages();
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "chat_messages" },
+        ({ old: deletedMessage }) => {
+          if (disposed || !deletedMessage?.id) return;
+          const message = [...messages.values()]
+            .find((entry) => String(entry.id) === String(deletedMessage.id));
+          if (!message) return;
+          messages.delete(message.id);
           renderMessages();
         }
       )
@@ -637,6 +650,47 @@
     const author = event.target.closest(".chat-message-author");
     if (author) void showUserProfile(author.dataset.userId, author.dataset.username);
   };
+  const onDeleteChatMessage = (event) => {
+    const messageId = event.detail?.messageId;
+    const message = [...messages.values()]
+      .find((entry) => String(entry.id) === String(messageId));
+    if (!message || message.user_id !== activeUserId) return;
+    void deleteChatMessage(message);
+  };
+  const deleteChatMessage = async (message) => {
+    try {
+      const { data, error } = await client
+        .from("chat_messages")
+        .delete()
+        .eq("id", message.id)
+        .eq("user_id", activeUserId)
+        .select("id, media_path");
+      if (error) throw error;
+      if (!data?.length) {
+        showStatus("That message could not be deleted. It may already be gone.", true);
+        return;
+      }
+
+      messages.delete(message.id);
+      renderMessages();
+      if (message.message_type === "image" && message.media_path) {
+        try {
+          const { error: storageError } = await client.storage
+            .from("killbyte-chat-images")
+            .remove([message.media_path]);
+          if (storageError) throw storageError;
+        } catch (error) {
+          console.error("Could not remove the deleted message image.", error);
+          showStatus("Message deleted, but its attached image could not be removed.", true);
+          return;
+        }
+      }
+      showStatus("Message deleted.");
+    } catch (error) {
+      console.error("Could not delete the chat message.", error);
+      showStatus(`Could not delete message: ${error.message || "Check your connection and try again."}`, true);
+    }
+  };
   const onCloseProfile = () => profileDialog?.close();
   const onProfileBackdropClick = (event) => {
     if (event.target === profileDialog) profileDialog.close();
@@ -677,6 +731,7 @@
     if (disposed) return;
     disposed = true;
     window.removeEventListener("killbyte:beforeNavigate", onBeforeNavigate);
+    document.removeEventListener("killbyte:deleteChatMessage", onDeleteChatMessage);
     document.removeEventListener("keydown", onKeyDown);
     composer.removeEventListener("submit", onSendMessage);
     picker.querySelector("#chat-picker-close").removeEventListener("click", hidePicker);
@@ -698,6 +753,7 @@
 
   window.killbyteChatCleanup = cleanup;
   window.addEventListener("killbyte:beforeNavigate", onBeforeNavigate);
+  document.addEventListener("killbyte:deleteChatMessage", onDeleteChatMessage);
   composer.addEventListener("submit", onSendMessage);
   const onEmojiButtonClick = () => showPicker("emoji");
   const onGifButtonClick = () => showPicker("gif");

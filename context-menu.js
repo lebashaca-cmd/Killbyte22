@@ -36,6 +36,7 @@
 
     event.preventDefault();
     activeLink = event.target.closest("a[href]");
+    const chatMessage = event.target.closest(".chat-message[data-message-id][data-own='true']");
     menu.replaceChildren();
     addItem("←  Go back", () => history.back());
     addItem("↻  Reload page", () => location.reload());
@@ -46,6 +47,15 @@
         location.href = "index.html";
       }
     });
+    if (chatMessage) {
+      const messageId = chatMessage.dataset.messageId;
+      addSeparator();
+      addItem("Delete message", () => {
+        document.dispatchEvent(new CustomEvent("killbyte:deleteChatMessage", {
+          detail: { messageId }
+        }));
+      });
+    }
     if (activeLink) {
       addSeparator();
       addItem("↗  Open link in new tab", () => window.open(activeLink.href, "_blank", "noopener,noreferrer"));
