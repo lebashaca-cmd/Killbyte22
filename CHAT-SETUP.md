@@ -10,7 +10,7 @@ Set `KILLBYTE_SUPABASE_URL` and `KILLBYTE_SUPABASE_ANON_KEY` in [chat-config.js]
 
 ## 2. Create the chat table and access policies
 
-Open the Supabase SQL Editor and run the contents of [supabase-chat.sql](./supabase-chat.sql). This creates the messages table, adds the room column (existing messages stay in `#general`), enables row-level security, lets signed-in users read messages, and only lets a user post as their own account name. The SQL is safe to rerun on an existing chat table.
+Open the Supabase SQL Editor and run the contents of [supabase-chat.sql](./supabase-chat.sql). This creates the messages and public profile tables, sets up public profile-image storage (JPEG, PNG, GIF, or WebP up to 5 MB), adds the room column (existing messages stay in `#general`), enables row-level security, lets signed-in users read messages and profiles, and only lets users manage their own profiles or post as their own account name. Existing accounts can add profile details from the Account page. The SQL is safe to rerun on an existing chat table.
 
 ## 3. Enable live message updates
 

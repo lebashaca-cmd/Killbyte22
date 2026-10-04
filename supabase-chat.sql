@@ -8,6 +8,24 @@ create table if not exists public.chat_messages (
 );
 
 alter table public.chat_messages
+  add column if not exists user_id uuid references auth.users (id) on delete cascade;
+
+create table if not exists public.user_profiles (
+  user_id uuid primary key references auth.users (id) on delete cascade,
+  display_name text not null check (char_length(display_name) between 2 and 32),
+  bio text not null default '' check (char_length(bio) <= 280),
+  avatar_url text not null default '' check (char_length(avatar_url) <= 2048),
+  banner_url text not null default '' check (char_length(banner_url) <= 2048),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.user_profiles
+  add column if not exists user_id uuid references auth.users (id) on delete cascade;
+
+create unique index if not exists user_profiles_user_id_idx
+  on public.user_profiles (user_id);
+
+alter table public.chat_messages
   add column if not exists room text not null default 'general'
   check (room in ('general', 'off-topic', 'gaming'));
 
@@ -18,6 +36,73 @@ create index if not exists chat_messages_room_created_at_idx
   on public.chat_messages (room, created_at desc);
 
 alter table public.chat_messages enable row level security;
+alter table public.user_profiles enable row level security;
+
+drop policy if exists "Signed-in users can read profiles" on public.user_profiles;
+create policy "Signed-in users can read profiles"
+  on public.user_profiles
+  for select
+  to authenticated
+  using (true);
+
+drop policy if exists "Users can create their own profile" on public.user_profiles;
+create policy "Users can create their own profile"
+  on public.user_profiles
+  for insert
+  to authenticated
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own profile" on public.user_profiles;
+create policy "Users can update their own profile"
+  on public.user_profiles
+  for update
+  to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'killbyte-profile-images',
+  'killbyte-profile-images',
+  true,
+  5242880,
+  array['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+)
+on conflict (id) do update
+set public = excluded.public,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "Users can upload their own profile images" on storage.objects;
+create policy "Users can upload their own profile images"
+  on storage.objects
+  for insert
+  to authenticated
+  with check (
+    bucket_id = 'killbyte-profile-images'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+drop policy if exists "Users can view profile images" on storage.objects;
+create policy "Users can view profile images"
+  on storage.objects
+  for select
+  to authenticated
+  using (bucket_id = 'killbyte-profile-images');
+
+drop policy if exists "Users can replace their own profile images" on storage.objects;
+create policy "Users can replace their own profile images"
+  on storage.objects
+  for update
+  to authenticated
+  using (
+    bucket_id = 'killbyte-profile-images'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  )
+  with check (
+    bucket_id = 'killbyte-profile-images'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
 
 drop policy if exists "Signed-in users can read chat messages" on public.chat_messages;
 create policy "Signed-in users can read chat messages"

@@ -62,6 +62,29 @@
       <section id="account-profile" class="box account-card" hidden>
         <p>Signed in as <strong id="account-profile-name"></strong></p>
         <p>Email: <span id="account-profile-email"></span></p>
+        <form id="account-profile-form">
+          <h2>Your public profile</h2>
+          <p class="account-profile-note">Your name, bio, avatar, and banner can be seen by other signed-in chat users. Images must be JPEG, PNG, GIF, or WebP and no larger than 5 MB.</p>
+          <label>
+            Display name
+            <input id="account-profile-display-name" name="displayName" type="text" minlength="2" maxlength="32" autocomplete="nickname" required />
+          </label>
+          <label>
+            Bio
+            <textarea id="account-profile-bio" name="bio" maxlength="280" rows="4" placeholder="A little about you..."></textarea>
+          </label>
+          <label>
+            Profile picture
+            <input id="account-profile-avatar" name="avatar" type="file" accept="image/jpeg,image/png,image/gif,image/webp" />
+          </label>
+          <img id="account-profile-avatar-preview" class="account-image-preview account-avatar-preview" alt="Profile picture preview" hidden />
+          <label>
+            Profile banner
+            <input id="account-profile-banner" name="banner" type="file" accept="image/jpeg,image/png,image/gif,image/webp" />
+          </label>
+          <img id="account-profile-banner-preview" class="account-image-preview account-banner-preview" alt="Profile banner preview" hidden />
+          <button id="account-profile-save" class="enter-button" type="submit">Save profile</button>
+        </form>
         <button id="account-signout" class="enter-button" type="button">Sign out</button>
       </section>
     </main>

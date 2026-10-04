@@ -75,5 +75,17 @@
         </form>
       </section>
     </main>
+    <dialog id="chat-user-profile" class="user-profile-dialog" aria-labelledby="chat-user-profile-name">
+      <button class="user-profile-close" type="button" aria-label="Close profile">&times;</button>
+      <div class="user-profile-banner">
+        <img id="chat-user-profile-banner" alt="" hidden />
+      </div>
+      <section class="user-profile-content">
+        <img id="chat-user-profile-avatar" class="user-profile-avatar" alt="" hidden />
+        <span id="chat-user-profile-initial" class="user-profile-avatar user-profile-initial" hidden></span>
+        <h2 id="chat-user-profile-name"></h2>
+        <p id="chat-user-profile-bio" class="user-profile-bio"></p>
+      </section>
+    </dialog>
   </body>
 </html>

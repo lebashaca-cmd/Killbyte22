@@ -1530,7 +1530,8 @@ iframe {
   font-size: 0.9rem;
 }
 
-.account-card input {
+.account-card input,
+.account-card textarea {
   min-width: 0;
   padding: 11px 12px;
   border: 1px solid color-mix(in srgb, var(--neon-light) 60%, transparent);
@@ -1540,14 +1541,66 @@ iframe {
   font: inherit;
 }
 
-.account-card input:focus {
+.account-card textarea {
+  resize: vertical;
+}
+
+.account-card input:focus,
+.account-card textarea:focus {
   outline: 2px solid var(--neon-color);
   outline-offset: 2px;
+}
+
+.account-profile-note {
+  color: color-mix(in srgb, var(--neon-light) 70%, white);
+  font-size: 0.9rem;
+}
+
+.account-card input[type="file"] {
+  padding: 8px;
+}
+
+.account-card input[type="file"]::file-selector-button {
+  margin-right: 10px;
+  padding: 7px 10px;
+  border: 1px solid color-mix(in srgb, var(--neon-light) 60%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--neon-secondary) 28%, #080914);
+  color: white;
+  font: inherit;
+  cursor: pointer;
+}
+
+.account-image-preview {
+  display: block;
+  max-width: 100%;
+  border: 1px solid color-mix(in srgb, var(--neon-light) 35%, transparent);
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.account-image-preview[hidden] {
+  display: none !important;
+}
+
+.account-avatar-preview {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+}
+
+.account-banner-preview {
+  width: 100%;
+  max-height: 180px;
 }
 
 .account-card .enter-button {
   width: 100%;
   cursor: pointer;
+}
+
+#account-signout {
+  margin-top: 12px;
 }
 
 .account-tabs {
@@ -1776,11 +1829,148 @@ iframe {
 
 .chat-message-meta {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 9px;
   margin-bottom: 4px;
   color: color-mix(in srgb, var(--neon-light) 70%, white);
   font-size: 0.78rem;
+}
+
+.chat-message-author {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.chat-message-author:hover,
+.chat-message-author:focus-visible {
+  color: white;
+  text-decoration: underline;
+}
+
+.chat-message-author:focus-visible {
+  outline: 2px solid var(--neon-color);
+  outline-offset: 3px;
+}
+
+.chat-message-avatar {
+  display: block;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.chat-message-initial {
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--neon-light) 50%, transparent);
+  background: color-mix(in srgb, var(--neon-secondary) 40%, #080914);
+  color: white;
+  font-weight: 700;
+}
+
+.user-profile-dialog {
+  position: fixed;
+  width: min(100% - 32px, 460px);
+  max-width: 460px;
+  max-height: min(90vh, 700px);
+  padding: 0;
+  overflow: auto;
+  border: 1px solid color-mix(in srgb, var(--neon-light) 55%, transparent);
+  border-radius: 16px;
+  background: #0b0c1a;
+  color: white;
+}
+
+.user-profile-dialog::backdrop {
+  background: rgb(0 0 0 / 75%);
+  backdrop-filter: blur(4px);
+}
+
+.user-profile-dialog[open] {
+  display: block;
+}
+
+.user-profile-close {
+  position: absolute;
+  z-index: 1;
+  top: 10px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgb(255 255 255 / 55%);
+  border-radius: 50%;
+  background: rgb(5 6 15 / 75%);
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.user-profile-banner {
+  height: 150px;
+  background: linear-gradient(120deg, var(--neon-secondary), color-mix(in srgb, var(--neon-color) 60%, #090a17));
+}
+
+.user-profile-banner img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-profile-banner img[hidden],
+.user-profile-avatar[hidden] {
+  display: none !important;
+}
+
+.user-profile-content {
+  position: relative;
+  padding: 52px 24px 24px;
+}
+
+.user-profile-avatar {
+  position: absolute;
+  top: -48px;
+  left: 22px;
+  width: 96px;
+  height: 96px;
+  border: 4px solid #0b0c1a;
+  border-radius: 50%;
+  background: #17182b;
+  object-fit: cover;
+}
+
+.user-profile-initial {
+  display: grid;
+  place-items: center;
+  color: white;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.user-profile-initial[hidden] {
+  display: none !important;
+}
+
+.user-profile-content h2 {
+  margin: 0 0 12px;
+  overflow-wrap: anywhere;
+}
+
+.user-profile-bio {
+  margin: 0;
+  color: color-mix(in srgb, var(--neon-light) 75%, white);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .chat-message p {

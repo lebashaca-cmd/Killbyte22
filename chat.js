@@ -18,7 +18,10 @@
   let activeRoom = "general";
   let roomRequestId = 0;
   let messages = new Map();
+  let profileCache = new Map();
+  let profilesLoading = new Map();
   let disposed = false;
+  const profileDialog = document.getElementById("chat-user-profile");
 
   const showStatus = (message, isError = false) => {
     status.textContent = message;
@@ -31,6 +34,86 @@
     const fallbackName = user.email?.split("@")[0] || "Member";
     const name = typeof metadataName === "string" && metadataName.trim() ? metadataName.trim() : fallbackName;
     return Array.from(name).slice(0, 32).join("");
+  };
+
+  const getSafeImageUrl = (value) => {
+    if (typeof value !== "string" || !value) return "";
+    try {
+      const url = new URL(value);
+      return url.protocol === "https:" || url.protocol === "http:" ? url.href : "";
+    } catch {
+      return "";
+    }
+  };
+
+  const loadProfiles = async (userIds) => {
+    const uniqueIds = [...new Set(userIds)];
+    const requestedIds = uniqueIds.filter((id) => !profileCache.has(id) && !profilesLoading.has(id));
+    const pendingRequests = uniqueIds
+      .filter((id) => profilesLoading.has(id))
+      .map((id) => profilesLoading.get(id));
+    let request = Promise.resolve(true);
+
+    if (requestedIds.length) {
+      request = (async () => {
+        try {
+          const { data, error } = await client
+            .from("user_profiles")
+            .select("user_id, display_name, bio, avatar_url, banner_url")
+            .in("user_id", requestedIds);
+          if (error) throw error;
+          requestedIds.forEach((id) => profileCache.set(id, null));
+          data.forEach((profile) => profileCache.set(profile.user_id, profile));
+          if (!disposed) renderMessages();
+          return true;
+        } catch (error) {
+          console.error("Could not load chat user profiles.", error);
+          showStatus("Profile details could not be loaded. Check the chat SQL setup and try again.", true);
+          return false;
+        }
+      })();
+      requestedIds.forEach((id) => profilesLoading.set(id, request));
+    }
+
+    const succeeded = (await Promise.all([request, ...pendingRequests])).every(Boolean);
+    requestedIds.forEach((id) => {
+      if (profilesLoading.get(id) === request) profilesLoading.delete(id);
+    });
+    return succeeded;
+  };
+
+  const showUserProfile = async (userId, fallbackName) => {
+    if (!userId || !profileDialog) return;
+    if (!(await loadProfiles([userId])) || disposed) return;
+
+    const profile = profileCache.get(userId);
+    const displayName = profile?.display_name || fallbackName || "Member";
+    const avatar = document.getElementById("chat-user-profile-avatar");
+    const initial = document.getElementById("chat-user-profile-initial");
+    const banner = document.getElementById("chat-user-profile-banner");
+    const avatarUrl = getSafeImageUrl(profile?.avatar_url);
+    const bannerUrl = getSafeImageUrl(profile?.banner_url);
+    document.getElementById("chat-user-profile-name").textContent = displayName;
+    document.getElementById("chat-user-profile-bio").textContent =
+      profile?.bio || (profile ? "No bio yet." : "This user has not set up a public profile yet.");
+    avatar.hidden = !avatarUrl;
+    avatar.removeAttribute("src");
+    avatar.onerror = () => {
+      avatar.hidden = true;
+      initial.hidden = false;
+    };
+    if (avatarUrl) avatar.src = avatarUrl;
+    initial.hidden = Boolean(avatarUrl);
+    initial.textContent = Array.from(displayName)[0] || "?";
+    banner.hidden = !bannerUrl;
+    banner.removeAttribute("src");
+    banner.onerror = () => {
+      banner.hidden = true;
+    };
+    if (bannerUrl) banner.src = bannerUrl;
+    if (!profile) showStatus("This user has not added public profile details yet.");
+    else showStatus("");
+    profileDialog.showModal();
   };
 
   const renderMessages = () => {
@@ -55,8 +138,31 @@
 
       const metadata = document.createElement("div");
       metadata.className = "chat-message-meta";
-      const author = document.createElement("strong");
-      author.textContent = message.username;
+      const profile = profileCache.get(message.user_id);
+      const displayName = profile?.display_name || message.username;
+      const author = document.createElement("button");
+      author.type = "button";
+      author.className = "chat-message-author";
+      author.dataset.userId = message.user_id;
+      author.dataset.username = message.username;
+      author.setAttribute("aria-label", `View ${displayName}'s profile`);
+      const avatarUrl = getSafeImageUrl(profile?.avatar_url);
+      if (avatarUrl) {
+        const avatar = document.createElement("img");
+        avatar.className = "chat-message-avatar";
+        avatar.src = avatarUrl;
+        avatar.alt = "";
+        avatar.loading = "lazy";
+        author.appendChild(avatar);
+      } else {
+        const initial = document.createElement("span");
+        initial.className = "chat-message-avatar chat-message-initial";
+        initial.textContent = Array.from(displayName)[0] || "?";
+        author.appendChild(initial);
+      }
+      const authorName = document.createElement("span");
+      authorName.textContent = displayName;
+      author.appendChild(authorName);
       const time = document.createElement("time");
       const createdAt = new Date(message.created_at);
       time.dateTime = createdAt.toISOString();
@@ -70,6 +176,7 @@
     });
 
     messagesList.scrollTop = messagesList.scrollHeight;
+    void loadProfiles(orderedMessages.map((message) => message.user_id));
   };
 
   const stopRealtime = async () => {
@@ -89,6 +196,8 @@
       await stopRealtime();
       activeUserId = user.id;
       messages = new Map();
+      profileCache = new Map();
+      profilesLoading = new Map();
       renderMessages();
     }
 
@@ -198,6 +307,14 @@
   };
 
   const onBeforeNavigate = () => window.killbyteChatCleanup?.();
+  const onAuthorClick = (event) => {
+    const author = event.target.closest(".chat-message-author");
+    if (author) void showUserProfile(author.dataset.userId, author.dataset.username);
+  };
+  const onCloseProfile = () => profileDialog?.close();
+  const onProfileBackdropClick = (event) => {
+    if (event.target === profileDialog) profileDialog.close();
+  };
   const onRoomSelect = async (event) => {
     const selectedRoom = event.currentTarget.dataset.room;
     if (selectedRoom === activeRoom) return;
@@ -235,6 +352,9 @@
     disposed = true;
     window.removeEventListener("killbyte:beforeNavigate", onBeforeNavigate);
     composer.removeEventListener("submit", onSendMessage);
+    messagesList.removeEventListener("click", onAuthorClick);
+    profileDialog?.querySelector(".user-profile-close").removeEventListener("click", onCloseProfile);
+    profileDialog?.removeEventListener("click", onProfileBackdropClick);
     roomButtons.forEach((button) => button.removeEventListener("click", onRoomSelect));
     if (authSubscription) authSubscription.unsubscribe();
     void stopRealtime();
@@ -244,6 +364,9 @@
   window.killbyteChatCleanup = cleanup;
   window.addEventListener("killbyte:beforeNavigate", onBeforeNavigate);
   composer.addEventListener("submit", onSendMessage);
+  messagesList.addEventListener("click", onAuthorClick);
+  profileDialog?.querySelector(".user-profile-close").addEventListener("click", onCloseProfile);
+  profileDialog?.addEventListener("click", onProfileBackdropClick);
   roomButtons.forEach((button) => button.addEventListener("click", onRoomSelect));
   chatPanel.setAttribute("aria-label", `${activeRoom} chat`);
   messageInput.placeholder = `Message #${activeRoom}...`;
