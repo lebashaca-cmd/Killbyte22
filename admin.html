@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin panel - Killbyte</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="context-menu.js" defer></script>
+    <script src="site-settings.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="chat-config.js" defer></script>
+    <script src="account.js" defer></script>
+    <script src="navigation.js" defer></script>
+    <script src="admin.js" defer></script>
+  </head>
+  <body class="details-page admin-page">
+    <nav class="page-nav" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="About.html">About</a>
+      <a href="Links.html">Links</a>
+      <a href="Games.html">Games</a>
+      <a href="browser.html">Browser</a>
+      <a href="settings.html">Settings</a>
+      <div class="sidebar-beta-section">
+        <h4 class="sidebar-nav-beta">Beta</h4>
+        <hr class="sidebar-nav-divider" aria-hidden="true" />
+        <a href="chat.html">Chat</a>
+        <a href="Media.html">Media</a>
+        <a href="Music.html">Music</a>
+        <a class="site-admin-link" href="admin.html" aria-current="page" hidden>Admin panel</a>
+      </div>
+    </nav>
+    <main class="box admin-shell">
+      <h1>Admin panel</h1>
+      <p id="admin-status" class="account-status" role="status" aria-live="polite">Checking admin access…</p>
+      <section id="admin-dashboard" class="box admin-dashboard" hidden>
+        <h2>Dashboard</h2>
+        <p>Your role: <strong id="admin-current-role"></strong></p>
+        <div class="admin-role-counts">
+          <p>Admins: <strong id="admin-count">—</strong></p>
+          <p>Owners: <strong id="owner-count">—</strong></p>
+        </div>
+        <p>Role assignments are managed securely in the Supabase SQL Editor.</p>
+      </section>
+    </main>
+  </body>
+</html>

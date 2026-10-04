@@ -1474,6 +1474,10 @@ iframe {
   border-bottom: 1px solid color-mix(in srgb, var(--neon-light) 35%, transparent);
 }
 
+.page-nav .site-admin-link[hidden] {
+  display: none !important;
+}
+
 .chat-page [hidden] {
   display: none !important;
 }
@@ -1855,6 +1859,18 @@ iframe {
   text-decoration: underline;
 }
 
+.chat-message-author[data-role="owner"],
+.user-profile-content h2[data-role="owner"] {
+  color: #ff5268;
+  text-shadow: 0 0 5px #ff263f, 0 0 12px rgb(255 38 63 / 85%);
+}
+
+.chat-message-author[data-role="admin"],
+.user-profile-content h2[data-role="admin"] {
+  color: #62baff;
+  text-shadow: 0 0 5px #168dff, 0 0 12px rgb(22 141 255 / 85%);
+}
+
 .chat-message-author:focus-visible {
   outline: 2px solid var(--neon-color);
   outline-offset: 3px;
@@ -1966,11 +1982,74 @@ iframe {
   overflow-wrap: anywhere;
 }
 
+.profile-role-tag {
+  display: inline-block;
+  margin: 0 0 14px;
+  padding: 4px 9px;
+  border: 1px solid color-mix(in srgb, var(--neon-light) 45%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--neon-secondary) 20%, #080914);
+  color: color-mix(in srgb, var(--neon-light) 75%, white);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.profile-role-tag[data-role="owner"] {
+  border-color: rgb(255 82 104 / 70%);
+  background: rgb(255 38 63 / 14%);
+  color: #ff7c8d;
+  box-shadow: 0 0 10px rgb(255 38 63 / 25%);
+}
+
+.profile-role-tag[data-role="admin"] {
+  border-color: rgb(98 186 255 / 70%);
+  background: rgb(22 141 255 / 14%);
+  color: #83caff;
+  box-shadow: 0 0 10px rgb(22 141 255 / 25%);
+}
+
 .user-profile-bio {
   margin: 0;
   color: color-mix(in srgb, var(--neon-light) 75%, white);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+.admin-page {
+  align-items: flex-start;
+}
+
+.admin-shell {
+  width: min(100%, 760px);
+  text-align: left;
+}
+
+.admin-shell h1 {
+  margin-top: 0;
+}
+
+.admin-page [hidden] {
+  display: none !important;
+}
+
+.admin-dashboard {
+  padding: 22px;
+}
+
+.admin-dashboard h2 {
+  margin-top: 0;
+}
+
+.admin-role-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 36px;
+}
+
+.admin-role-counts p {
+  margin: 0 0 12px;
 }
 
 .chat-message p {

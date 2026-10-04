@@ -6,6 +6,8 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 const output = path.join(root, "dist");
 const siteFiles = [
   "About.html",
+  "admin.html",
+  "admin.js",
   "account.html",
   "account.js",
   "CHAT-SETUP.md",

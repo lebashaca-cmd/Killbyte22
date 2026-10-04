@@ -22,8 +22,21 @@ create table if not exists public.user_profiles (
 alter table public.user_profiles
   add column if not exists user_id uuid references auth.users (id) on delete cascade;
 
+alter table public.user_profiles
+  add column if not exists display_name text not null default 'Member',
+  add column if not exists bio text not null default '',
+  add column if not exists avatar_url text not null default '',
+  add column if not exists banner_url text not null default '',
+  add column if not exists updated_at timestamptz not null default now();
+
 create unique index if not exists user_profiles_user_id_idx
   on public.user_profiles (user_id);
+
+create table if not exists public.user_roles (
+  user_id uuid primary key references auth.users (id) on delete cascade,
+  role text not null check (role in ('admin', 'owner')),
+  created_at timestamptz not null default now()
+);
 
 alter table public.chat_messages
   add column if not exists room text not null default 'general'
@@ -37,6 +50,9 @@ create index if not exists chat_messages_room_created_at_idx
 
 alter table public.chat_messages enable row level security;
 alter table public.user_profiles enable row level security;
+alter table public.user_roles enable row level security;
+revoke all on public.user_roles from anon, authenticated;
+grant select on public.user_roles to authenticated;
 
 drop policy if exists "Signed-in users can read profiles" on public.user_profiles;
 create policy "Signed-in users can read profiles"
@@ -59,6 +75,13 @@ create policy "Users can update their own profile"
   to authenticated
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+drop policy if exists "Signed-in users can read account roles" on public.user_roles;
+create policy "Signed-in users can read account roles"
+  on public.user_roles
+  for select
+  to authenticated
+  using (true);
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (

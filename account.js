@@ -8,6 +8,10 @@
 
   let client = null;
   let currentUser = null;
+  let currentRole = null;
+  let currentRoleUserId = null;
+  let roleLoadPromise = null;
+  let roleLoadUserId = null;
   let authInitializationError = null;
   let accountFormCleanup = null;
   let profileLoadedUserId = null;
@@ -21,6 +25,61 @@
     typeof window.KILLBYTE_SUPABASE_ANON_KEY === "string" &&
     window.KILLBYTE_SUPABASE_ANON_KEY.length > 20 &&
     window.KILLBYTE_SUPABASE_ANON_KEY !== "YOUR_SUPABASE_ANON_KEY";
+
+  const updateAdminLink = async () => {
+    const nav = document.querySelector(".sidebar-beta-section");
+    if (!nav) return;
+
+    let link = nav.querySelector(".site-admin-link");
+    if (!link) {
+      link = document.createElement("a");
+      link.className = "site-admin-link";
+      link.href = "admin.html";
+      link.textContent = "Admin panel";
+      nav.appendChild(link);
+    }
+    link.hidden = true;
+    link.removeAttribute("aria-current");
+    if (!client || !currentUser) return;
+
+    if (currentRoleUserId === currentUser.id) {
+      link.hidden = !["admin", "owner"].includes(currentRole);
+    } else if (roleLoadUserId !== currentUser.id) {
+      const userId = currentUser.id;
+      const request = client
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .maybeSingle()
+        .then(({ data, error }) => {
+          if (error) throw error;
+          if (currentUser?.id === userId) {
+            currentRole = data?.role || null;
+            currentRoleUserId = userId;
+          }
+        })
+        .catch((error) => {
+          console.error("Could not check account role.", error);
+          if (currentUser?.id === userId) {
+            currentRole = null;
+            currentRoleUserId = userId;
+          }
+        });
+      roleLoadPromise = request;
+      roleLoadUserId = userId;
+      request.finally(() => {
+        if (roleLoadPromise === request) {
+          roleLoadPromise = null;
+          roleLoadUserId = null;
+        }
+        if (currentUser?.id === userId) void updateAdminLink();
+      });
+    }
+
+    if (link.hidden === false && new URL(link.href, location.href).pathname === location.pathname) {
+      link.setAttribute("aria-current", "page");
+    }
+  };
 
   const updateAccountLink = () => {
     const nav = document.querySelector(".page-nav");
@@ -41,6 +100,7 @@
     } else {
       link.removeAttribute("aria-current");
     }
+    void updateAdminLink();
   };
 
   const showAccountStatus = (message, isError = false) => {
@@ -110,7 +170,10 @@
       profileLoadedUserId = user.id;
     } catch (error) {
       console.error("Could not load the Killbyte profile.", error);
-      showAccountStatus("Could not load your public profile. Check the chat SQL setup and try again.", true);
+      showAccountStatus(
+        `Could not load your public profile: ${error.message || "Check the chat SQL setup and try again."}`,
+        true
+      );
     }
   };
 
@@ -358,6 +421,10 @@
     const { data: listener } = client.auth.onAuthStateChange((_event, session) => {
       window.setTimeout(() => {
         currentUser = session?.user || null;
+        if (!currentUser || currentUser.id !== currentRoleUserId) {
+          currentRole = null;
+          currentRoleUserId = null;
+        }
         if (!currentUser || currentUser.id !== profileLoadedUserId) profileLoadedUserId = null;
         authInitializationError = null;
         updateAccountPage();
@@ -371,6 +438,10 @@
         return;
       }
       currentUser = data.session?.user || null;
+      if (!currentUser || currentUser.id !== currentRoleUserId) {
+        currentRole = null;
+        currentRoleUserId = null;
+      }
       if (!currentUser || currentUser.id !== profileLoadedUserId) profileLoadedUserId = null;
       updateAccountPage();
     }).catch((error) => {

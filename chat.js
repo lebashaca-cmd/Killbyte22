@@ -19,6 +19,7 @@
   let roomRequestId = 0;
   let messages = new Map();
   let profileCache = new Map();
+  let roleCache = new Map();
   let profilesLoading = new Map();
   let disposed = false;
   const profileDialog = document.getElementById("chat-user-profile");
@@ -47,7 +48,7 @@
   };
 
   const loadProfiles = async (userIds) => {
-    const uniqueIds = [...new Set(userIds)];
+    const uniqueIds = [...new Set(userIds)].filter((id) => typeof id === "string" && id);
     const requestedIds = uniqueIds.filter((id) => !profileCache.has(id) && !profilesLoading.has(id));
     const pendingRequests = uniqueIds
       .filter((id) => profilesLoading.has(id))
@@ -57,13 +58,24 @@
     if (requestedIds.length) {
       request = (async () => {
         try {
-          const { data, error } = await client
-            .from("user_profiles")
-            .select("user_id, display_name, bio, avatar_url, banner_url")
-            .in("user_id", requestedIds);
-          if (error) throw error;
-          requestedIds.forEach((id) => profileCache.set(id, null));
-          data.forEach((profile) => profileCache.set(profile.user_id, profile));
+          const [profileResult, roleResult] = await Promise.all([
+            client
+              .from("user_profiles")
+              .select("user_id, display_name, bio, avatar_url, banner_url")
+              .in("user_id", requestedIds),
+            client
+              .from("user_roles")
+              .select("user_id, role")
+              .in("user_id", requestedIds)
+          ]);
+          if (profileResult.error) throw profileResult.error;
+          if (roleResult.error) throw roleResult.error;
+          requestedIds.forEach((id) => {
+            profileCache.set(id, null);
+            roleCache.set(id, "member");
+          });
+          profileResult.data.forEach((profile) => profileCache.set(profile.user_id, profile));
+          roleResult.data.forEach((entry) => roleCache.set(entry.user_id, entry.role));
           if (!disposed) renderMessages();
           return true;
         } catch (error) {
@@ -87,13 +99,19 @@
     if (!(await loadProfiles([userId])) || disposed) return;
 
     const profile = profileCache.get(userId);
+    const role = roleCache.get(userId) || "member";
     const displayName = profile?.display_name || fallbackName || "Member";
     const avatar = document.getElementById("chat-user-profile-avatar");
     const initial = document.getElementById("chat-user-profile-initial");
     const banner = document.getElementById("chat-user-profile-banner");
     const avatarUrl = getSafeImageUrl(profile?.avatar_url);
     const bannerUrl = getSafeImageUrl(profile?.banner_url);
-    document.getElementById("chat-user-profile-name").textContent = displayName;
+    const profileName = document.getElementById("chat-user-profile-name");
+    profileName.textContent = displayName;
+    profileName.dataset.role = role;
+    const roleTag = document.getElementById("chat-user-profile-role");
+    roleTag.textContent = role === "owner" ? "Owner" : role === "admin" ? "Admin" : "Member";
+    roleTag.dataset.role = role;
     document.getElementById("chat-user-profile-bio").textContent =
       profile?.bio || (profile ? "No bio yet." : "This user has not set up a public profile yet.");
     avatar.hidden = !avatarUrl;
@@ -139,10 +157,12 @@
       const metadata = document.createElement("div");
       metadata.className = "chat-message-meta";
       const profile = profileCache.get(message.user_id);
+      const role = roleCache.get(message.user_id) || "member";
       const displayName = profile?.display_name || message.username;
       const author = document.createElement("button");
       author.type = "button";
       author.className = "chat-message-author";
+      author.dataset.role = role;
       author.dataset.userId = message.user_id;
       author.dataset.username = message.username;
       author.setAttribute("aria-label", `View ${displayName}'s profile`);
@@ -197,6 +217,7 @@
       activeUserId = user.id;
       messages = new Map();
       profileCache = new Map();
+      roleCache = new Map();
       profilesLoading = new Map();
       renderMessages();
     }
