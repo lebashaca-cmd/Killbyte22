@@ -10,7 +10,11 @@ Set `KILLBYTE_SUPABASE_URL` and `KILLBYTE_SUPABASE_ANON_KEY` in [chat-config.js]
 
 ## 2. Create the chat table and access policies
 
-Open the Supabase SQL Editor and run the contents of [supabase-chat.sql](./supabase-chat.sql). This creates or upgrades the messages, public profile, and role tables, automatically assigns the Member role to new signups, sets up public profile-image storage (JPEG, PNG, GIF, or WebP up to 5 MB), adds the room column (existing messages stay in `#general`), enables row-level security, lets signed-in users read messages, profiles, and role labels, and only lets users manage their own profiles or post as their own account name. Users can have multiple role tags. Roles cannot be assigned from the browser; assign additional roles in the SQL Editor. Existing accounts can add profile details from the Account page. The SQL is safe to rerun on an existing chat table.
+Open the Supabase SQL Editor and run the contents of [supabase-chat.sql](./supabase-chat.sql). This creates or upgrades the messages, public profile, and role tables, automatically assigns the Member role to new signups, sets up public profile-image storage and private chat-image storage (JPEG, PNG, GIF, or WebP up to 5 MB), and adds columns for text, image, and GIF messages. It also adds the room column (existing messages stay in `#general`), enables row-level security, lets signed-in users read messages, profiles, and role labels, and only lets users manage their own profiles or post as their own account name. Users can have multiple role tags. Roles cannot be assigned from the browser; assign additional roles in the SQL Editor. Existing accounts can add profile details from the Account page. The SQL is safe to rerun on an existing chat table.
+
+## 3. Configure KLIPY GIF search
+
+Create an app and API key in the [KLIPY Partner Panel](https://partner.klipy.com/), then set `window.KILLBYTE_KLIPY_APP_KEY` in [chat-config.js](./chat-config.js). The key is used by the browser and is visible to site visitors. KLIPY limits testing keys to 100 API requests per hour; request production access in the Partner Panel when ready. The GIF picker uses KLIPY's [GIF search endpoint](https://docs.klipy.com/gifs-api/gifs-search-api.md) and records share events. Follow KLIPY's [integration requirements](https://docs.klipy.com/integration-requirements.md), including retaining direct media URLs and KLIPY attribution. Emoji and image upload work without a KLIPY key.
 
 To make an account an owner, find its UUID in **Authentication → Users**, then run this in the SQL Editor (replace the UUID):
 
@@ -20,22 +24,22 @@ values ('YOUR_AUTH_USER_UUID', 'owner')
 on conflict (user_id, role) do nothing;
 ```
 
-Use `'admin'`, `'beta'`, or `'member'` to assign another tag. An account may have multiple role rows. Only `'admin'` and `'owner'` grant access to the Admin panel. To remove an assigned role:
+Use `'admin'`, `'beta'`, or `'member'` to assign another tag. Always use `public.user_role_assignments` for role changes; the old `public.user_roles` table is legacy and only supports `'admin'` and `'owner'`. An account may have multiple role rows. New accounts receive `'member'` automatically. Only `'admin'` and `'owner'` grant access to the Admin panel. To remove an assigned role:
 
 ```sql
 delete from public.user_role_assignments
 where user_id = 'YOUR_AUTH_USER_UUID' and role = 'owner';
 ```
 
-## 3. Enable live message updates
+## 4. Enable live message updates
 
 In Supabase, open **Database → Publications**, select `supabase_realtime`, and enable `public.chat_messages`. The initial message history will load without this step, but the room will not receive live updates.
 
-## 4. Configure account email redirects
+## 5. Configure account email redirects
 
 In **Authentication → URL Configuration**, set the Site URL to the deployed Killbyte site and add its account page to the allowed redirect URLs if needed. For local development, allow the local origin you use to serve the site. If email confirmation is enabled, new users must confirm their email before signing in.
 
-## 5. Build and deploy
+## 6. Build and deploy
 
 Run `npm run build` and deploy the generated `dist` directory as usual. The **Account** link appears in the main navigation on every page; users can create an account or sign in there, then use the same session in Chat. Test by creating two accounts in separate browsers and sending messages between them.
 

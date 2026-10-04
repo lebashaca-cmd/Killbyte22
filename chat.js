@@ -8,9 +8,21 @@
   const messagesList = document.getElementById("chat-messages");
   const composer = document.getElementById("chat-composer");
   const messageInput = document.getElementById("chat-message-input");
+  const picker = document.getElementById("chat-composer-picker");
+  const emojiButton = document.getElementById("chat-emoji-button");
+  const gifButton = document.getElementById("chat-gif-button");
+  const imageButton = document.getElementById("chat-image-button");
+  const imageInput = document.getElementById("chat-image-input");
+  const attachmentName = document.getElementById("chat-attachment-name");
+  const gifSearchForm = document.getElementById("chat-gif-search");
+  const gifQuery = document.getElementById("chat-gif-query");
+  const gifResults = document.getElementById("chat-gif-results");
+  const gifStatus = document.getElementById("chat-gif-status");
+  const gifPanel = document.getElementById("chat-gif-panel");
+  const emojiPanel = document.getElementById("chat-emoji-panel");
   const roomButtons = Array.from(document.querySelectorAll(".chat-room-button[data-room]"));
 
-  if (!status || !setup || !authPanel || !chatPanel || roomButtons.length === 0) return;
+  if (!status || !setup || !authPanel || !chatPanel || !composer || !messageInput || roomButtons.length === 0) return;
 
   let channel = null;
   let authSubscription = null;
@@ -21,6 +33,13 @@
   let profileCache = new Map();
   let roleCache = new Map();
   let profilesLoading = new Map();
+  let signedMediaUrls = new Map();
+  let mediaLoading = new Map();
+  let attachedImage = null;
+  let attachedGifUrl = "";
+  let attachedGifSlug = "";
+  let attachedGifQuery = "";
+  let gifSearchRequestId = 0;
   let disposed = false;
   const profileDialog = document.getElementById("chat-user-profile");
 
@@ -45,6 +64,120 @@
     } catch {
       return "";
     }
+  };
+
+  const getSafeKlipyUrl = (value) => {
+    if (typeof value !== "string" || !value) return "";
+    try {
+      const url = new URL(value);
+      return url.protocol === "https:" &&
+        (url.hostname === "klipy.com" || url.hostname.endsWith(".klipy.com"))
+        ? value
+        : "";
+    } catch {
+      return "";
+    }
+  };
+
+  const showPicker = (panelName) => {
+    if (!picker) return;
+    const showGif = panelName === "gif";
+    picker.hidden = false;
+    emojiPanel.hidden = showGif;
+    gifPanel.hidden = !showGif;
+    document.getElementById("chat-picker-title").textContent = showGif ? "GIFs" : "Emoji";
+    emojiButton.setAttribute("aria-pressed", String(!showGif));
+    gifButton.setAttribute("aria-pressed", String(showGif));
+    if (showGif) {
+      gifQuery.focus();
+      if (!gifResults.childElementCount) void searchGifs("trending");
+    }
+  };
+
+  const hidePicker = () => {
+    if (!picker) return;
+    picker.hidden = true;
+    emojiButton.setAttribute("aria-pressed", "false");
+    gifButton.setAttribute("aria-pressed", "false");
+  };
+
+  const searchGifs = async (query) => {
+    const appKey = window.KILLBYTE_KLIPY_APP_KEY;
+    if (typeof appKey !== "string" || !appKey.trim()) {
+      gifStatus.textContent = "GIF search is not configured yet. Add your KLIPY app key to chat-config.js.";
+      return;
+    }
+    const requestId = ++gifSearchRequestId;
+    gifStatus.textContent = "Searching KLIPY…";
+    gifResults.replaceChildren();
+
+    try {
+      const params = new URLSearchParams({ q: query, per_page: "24", format_filter: "gif" });
+      const response = await fetch(
+        `https://api.klipy.com/api/v1/${encodeURIComponent(appKey.trim())}/gifs/search?${params}`
+      );
+      if (!response.ok) throw new Error(`KLIPY search returned ${response.status}.`);
+      const result = await response.json();
+      if (disposed || requestId !== gifSearchRequestId) return;
+
+      const items = Array.isArray(result.data?.data) ? result.data.data : [];
+      items.forEach((gif) => {
+        const previewUrl = getSafeKlipyUrl(
+          gif.file?.sm?.gif?.url || gif.file?.md?.gif?.url || gif.file?.hd?.gif?.url
+        );
+        const fullUrl = getSafeKlipyUrl(gif.file?.hd?.gif?.url || gif.file?.md?.gif?.url || gif.file?.sm?.gif?.url);
+        if (!previewUrl || !fullUrl) return;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "chat-gif-result";
+        button.setAttribute("aria-label", `Select GIF: ${gif.title || "KLIPY GIF"}`);
+        const image = document.createElement("img");
+        image.src = previewUrl;
+        image.alt = gif.title || "GIF search result";
+        image.loading = "lazy";
+        button.appendChild(image);
+        button.addEventListener("click", () => {
+          attachedGifUrl = fullUrl;
+          attachedGifSlug = gif.slug;
+          attachedGifQuery = query;
+          attachedImage = null;
+          imageInput.value = "";
+          attachmentName.textContent = "GIF selected · add a caption, then send";
+          attachmentName.hidden = false;
+          messageInput.placeholder = "Add a caption (optional)...";
+          hidePicker();
+          messageInput.focus();
+        });
+        gifResults.appendChild(button);
+      });
+      gifStatus.textContent = items.length ? "" : "No GIFs found. Try another search.";
+    } catch (error) {
+      console.error("Could not search KLIPY GIFs.", error);
+      if (requestId === gifSearchRequestId) {
+        gifStatus.textContent = "GIF search failed. Check the KLIPY app key and connection, then try again.";
+      }
+    }
+  };
+
+  const loadSignedMediaUrl = async (path) => {
+    if (!path || signedMediaUrls.has(path) || mediaLoading.has(path)) return;
+    const request = (async () => {
+      try {
+        const { data, error } = await client.storage
+          .from("killbyte-chat-images")
+          .createSignedUrl(path, 60 * 60 * 24 * 7);
+        if (error) throw error;
+        signedMediaUrls.set(path, data.signedUrl);
+        if (!disposed) renderMessages();
+      } catch (error) {
+        console.error("Could not load a chat image.", error);
+        showStatus("A chat image could not be loaded. Check Supabase Storage setup.", true);
+      } finally {
+        mediaLoading.delete(path);
+      }
+    })();
+    mediaLoading.set(path, request);
+    await request;
   };
 
   const loadProfiles = async (userIds) => {
@@ -203,9 +336,44 @@
       time.textContent = createdAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
       metadata.append(author, time);
 
-      const body = document.createElement("p");
-      body.textContent = message.content;
-      item.append(metadata, body);
+      if (message.message_type === "image" || message.message_type === "gif") {
+        const mediaUrl = message.message_type === "gif"
+          ? getSafeKlipyUrl(message.media_url)
+          : signedMediaUrls.get(message.media_path);
+        if (mediaUrl) {
+          const media = document.createElement("img");
+          media.className = "chat-message-media";
+          media.src = mediaUrl;
+          media.alt = message.message_type === "gif" ? "GIF shared in chat" : "Image shared in chat";
+          media.loading = "lazy";
+          item.append(metadata, media);
+          if (message.content && message.content !== "[Image]" && message.content !== "[GIF]") {
+            const caption = document.createElement("p");
+            caption.className = "chat-message-caption";
+            caption.textContent = message.content;
+            item.appendChild(caption);
+          }
+          if (message.message_type === "gif") {
+            const attribution = document.createElement("a");
+            attribution.className = "chat-message-attribution";
+            attribution.href = "https://klipy.com/";
+            attribution.target = "_blank";
+            attribution.rel = "noopener noreferrer";
+            attribution.textContent = "GIF via KLIPY";
+            item.appendChild(attribution);
+          }
+        } else {
+          const loadingText = document.createElement("p");
+          loadingText.className = "chat-media-loading";
+          loadingText.textContent = message.message_type === "gif" ? "GIF unavailable" : "Loading image…";
+          item.append(metadata, loadingText);
+          if (message.message_type === "image") void loadSignedMediaUrl(message.media_path);
+        }
+      } else {
+        const body = document.createElement("p");
+        body.textContent = message.content;
+        item.append(metadata, body);
+      }
       messagesList.appendChild(item);
     });
 
@@ -233,6 +401,8 @@
       profileCache = new Map();
       roleCache = new Map();
       profilesLoading = new Map();
+      signedMediaUrls = new Map();
+      mediaLoading = new Map();
       renderMessages();
     }
 
@@ -263,7 +433,7 @@
 
     const { data, error } = await client
       .from("chat_messages")
-      .select("id, user_id, username, content, room, created_at")
+      .select("id, user_id, username, content, room, created_at, message_type, media_url, media_path")
       .eq("room", room)
       .order("created_at", { ascending: false })
       .limit(100);
@@ -282,6 +452,10 @@
     await stopRealtime();
     activeUserId = null;
     messages = new Map();
+    attachedImage = null;
+    attachedGifUrl = "";
+    imageInput.value = "";
+    attachmentName.hidden = true;
     messagesList.replaceChildren();
     chatPanel.hidden = true;
     authPanel.hidden = false;
@@ -290,7 +464,7 @@
   const onSendMessage = async (event) => {
     event.preventDefault();
     const content = messageInput.value.trim();
-    if (!content || !activeUserId) return;
+    if ((!content && !attachedImage && !attachedGifUrl) || !activeUserId) return;
     const room = activeRoom;
 
     let userResult;
@@ -310,35 +484,148 @@
 
     const username = getDisplayName(userResult.user);
     const sendButton = composer.querySelector("button[type='submit']");
+    let uploadedChatImagePath = "";
     sendButton.disabled = true;
     messageInput.disabled = true;
+    emojiButton.disabled = true;
+    gifButton.disabled = true;
+    imageButton.disabled = true;
 
     try {
+      let messageType = "text";
+      let mediaUrl = "";
+      let mediaPath = "";
+      if (attachedImage) {
+        messageType = "image";
+        const extensionByType = {
+          "image/jpeg": "jpg",
+          "image/png": "png",
+          "image/gif": "gif",
+          "image/webp": "webp"
+        };
+        mediaPath = `${userResult.user.id}/${crypto.randomUUID()}.${extensionByType[attachedImage.type]}`;
+        const { error: uploadError } = await client.storage
+          .from("killbyte-chat-images")
+          .upload(mediaPath, attachedImage, {
+            cacheControl: "3600",
+            contentType: attachedImage.type,
+            upsert: false
+          });
+        if (uploadError) throw uploadError;
+        uploadedChatImagePath = mediaPath;
+      } else if (attachedGifUrl) {
+        messageType = "gif";
+        mediaUrl = attachedGifUrl;
+      }
+
       const { data, error } = await client
         .from("chat_messages")
-        .insert({ user_id: userResult.user.id, username, content, room })
-        .select("id, user_id, username, content, room, created_at")
+        .insert({
+          user_id: userResult.user.id,
+          username,
+          content: content || (messageType === "gif" ? "[GIF]" : messageType === "image" ? "[Image]" : ""),
+          room,
+          message_type: messageType,
+          media_url: mediaUrl,
+          media_path: mediaPath
+        })
+        .select("id, user_id, username, content, room, created_at, message_type, media_url, media_path")
         .single();
 
-      if (error) {
-        showStatus(`Message was not sent: ${error.message}`, true);
-        return;
-      }
+      if (error) throw error;
 
       if (activeRoom === room) {
         messages.set(data.id, data);
         renderMessages();
       }
       messageInput.value = "";
+      if (messageType === "gif" && attachedGifSlug) {
+        try {
+          const shareResponse = await fetch(
+            `https://api.klipy.com/api/v1/${encodeURIComponent(window.KILLBYTE_KLIPY_APP_KEY.trim())}/gifs/share/${encodeURIComponent(attachedGifSlug)}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                customer_id: userResult.user.id,
+                q: attachedGifQuery
+              })
+            }
+          );
+          if (!shareResponse.ok) throw new Error(`KLIPY share event returned ${shareResponse.status}.`);
+        } catch (error) {
+          console.error("Could not record the KLIPY GIF share event.", error);
+        }
+      }
+      attachedImage = null;
+      attachedGifUrl = "";
+      attachedGifSlug = "";
+      attachedGifQuery = "";
+      imageInput.value = "";
+      attachmentName.hidden = true;
+      attachmentName.textContent = "";
+      messageInput.placeholder = `Message #${activeRoom}...`;
       showStatus("");
       messageInput.focus();
     } catch (error) {
       console.error("Could not send the chat message.", error);
-      showStatus("Message was not sent. Check your connection and try again.", true);
+      if (uploadedChatImagePath) {
+        try {
+          const { error: cleanupError } = await client.storage
+            .from("killbyte-chat-images")
+            .remove([uploadedChatImagePath]);
+          if (cleanupError) console.error("Could not remove an unsent chat image.", cleanupError);
+        } catch (cleanupError) {
+          console.error("Could not remove an unsent chat image.", cleanupError);
+        }
+      }
+      showStatus(`Message was not sent: ${error.message || "Check your connection and try again."}`, true);
     } finally {
       sendButton.disabled = false;
       messageInput.disabled = false;
+      emojiButton.disabled = false;
+      gifButton.disabled = false;
+      imageButton.disabled = false;
     }
+  };
+
+  const onEmojiClick = (event) => {
+    const button = event.target.closest("[data-emoji]");
+    if (!button) return;
+    const emoji = button.dataset.emoji;
+    const start = messageInput.selectionStart;
+    const end = messageInput.selectionEnd;
+    if (messageInput.value.length + emoji.length - (end - start) > Number(messageInput.maxLength)) {
+      showStatus("That emoji would exceed the message length limit.", true);
+      return;
+    }
+    messageInput.setRangeText(emoji, start, end, "end");
+    messageInput.focus();
+  };
+
+  const onImageSelected = () => {
+    const file = imageInput.files[0];
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/gif", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) {
+      imageInput.value = "";
+      showStatus("Choose a JPEG, PNG, GIF, or WebP image no larger than 5 MB.", true);
+      return;
+    }
+    attachedImage = file;
+    attachedGifUrl = "";
+    attachedGifSlug = "";
+    attachedGifQuery = "";
+    attachmentName.textContent = `${file.name} · add a caption, then send`;
+    attachmentName.hidden = false;
+    messageInput.placeholder = "Add a caption (optional)...";
+    hidePicker();
+    messageInput.focus();
+  };
+
+  const onGifSearch = (event) => {
+    event.preventDefault();
+    const query = gifQuery.value.trim();
+    if (query) void searchGifs(query);
   };
 
   const onBeforeNavigate = () => window.killbyteChatCleanup?.();
@@ -386,7 +673,15 @@
     if (disposed) return;
     disposed = true;
     window.removeEventListener("killbyte:beforeNavigate", onBeforeNavigate);
+    document.removeEventListener("keydown", onKeyDown);
     composer.removeEventListener("submit", onSendMessage);
+    picker.querySelector("#chat-picker-close").removeEventListener("click", hidePicker);
+    emojiButton.removeEventListener("click", onEmojiButtonClick);
+    gifButton.removeEventListener("click", onGifButtonClick);
+    emojiPanel.removeEventListener("click", onEmojiClick);
+    imageButton.removeEventListener("click", onImageButtonClick);
+    imageInput.removeEventListener("change", onImageSelected);
+    gifSearchForm.removeEventListener("submit", onGifSearch);
     messagesList.removeEventListener("click", onAuthorClick);
     profileDialog?.querySelector(".user-profile-close").removeEventListener("click", onCloseProfile);
     profileDialog?.removeEventListener("click", onProfileBackdropClick);
@@ -399,6 +694,20 @@
   window.killbyteChatCleanup = cleanup;
   window.addEventListener("killbyte:beforeNavigate", onBeforeNavigate);
   composer.addEventListener("submit", onSendMessage);
+  const onEmojiButtonClick = () => showPicker("emoji");
+  const onGifButtonClick = () => showPicker("gif");
+  const onImageButtonClick = () => imageInput.click();
+  const onKeyDown = (event) => {
+    if (event.key === "Escape" && !picker.hidden) hidePicker();
+  };
+  picker.querySelector("#chat-picker-close").addEventListener("click", hidePicker);
+  emojiButton.addEventListener("click", onEmojiButtonClick);
+  gifButton.addEventListener("click", onGifButtonClick);
+  emojiPanel.addEventListener("click", onEmojiClick);
+  imageButton.addEventListener("click", onImageButtonClick);
+  imageInput.addEventListener("change", onImageSelected);
+  gifSearchForm.addEventListener("submit", onGifSearch);
+  document.addEventListener("keydown", onKeyDown);
   messagesList.addEventListener("click", onAuthorClick);
   profileDialog?.querySelector(".user-profile-close").addEventListener("click", onCloseProfile);
   profileDialog?.addEventListener("click", onProfileBackdropClick);

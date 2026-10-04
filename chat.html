@@ -46,6 +46,7 @@
         <ol>
           <li>Create a Supabase project and copy its project URL and public anon key.</li>
           <li>Set <code>KILLBYTE_SUPABASE_URL</code> and <code>KILLBYTE_SUPABASE_ANON_KEY</code> in <code>chat-config.js</code>.</li>
+          <li>Set <code>KILLBYTE_KLIPY_APP_KEY</code> in <code>chat-config.js</code> to enable GIF search.</li>
           <li><a href="supabase-chat.sql" download>Download the chat SQL</a> and run it in the Supabase SQL Editor.</li>
           <li>Enable Realtime for <code>public.chat_messages</code> using the <a href="CHAT-SETUP.md">setup guide</a>.</li>
         </ol>
@@ -60,6 +61,42 @@
       <section id="chat-panel" class="chat-panel" aria-label="Chat room" hidden>
         <ol id="chat-messages" class="chat-messages" aria-live="polite" aria-relevant="additions"></ol>
         <form id="chat-composer" class="chat-composer">
+          <section id="chat-composer-picker" class="chat-composer-picker" aria-label="Message tools" hidden>
+            <header class="chat-picker-header">
+              <h3 id="chat-picker-title">Emoji</h3>
+              <button id="chat-picker-close" class="chat-picker-close" type="button" aria-label="Close message tools">&times;</button>
+            </header>
+            <div id="chat-emoji-panel" class="chat-emoji-grid" aria-label="Choose an emoji">
+              <button type="button" data-emoji="😀" aria-label="Grinning face">😀</button>
+              <button type="button" data-emoji="😂" aria-label="Face with tears of joy">😂</button>
+              <button type="button" data-emoji="🥹" aria-label="Face holding back tears">🥹</button>
+              <button type="button" data-emoji="😍" aria-label="Heart eyes">😍</button>
+              <button type="button" data-emoji="😎" aria-label="Smiling face with sunglasses">😎</button>
+              <button type="button" data-emoji="🤔" aria-label="Thinking face">🤔</button>
+              <button type="button" data-emoji="😭" aria-label="Crying face">😭</button>
+              <button type="button" data-emoji="😡" aria-label="Angry face">😡</button>
+              <button type="button" data-emoji="👍" aria-label="Thumbs up">👍</button>
+              <button type="button" data-emoji="👎" aria-label="Thumbs down">👎</button>
+              <button type="button" data-emoji="❤️" aria-label="Red heart">❤️</button>
+              <button type="button" data-emoji="🔥" aria-label="Fire">🔥</button>
+              <button type="button" data-emoji="🎉" aria-label="Party popper">🎉</button>
+              <button type="button" data-emoji="✨" aria-label="Sparkles">✨</button>
+              <button type="button" data-emoji="👀" aria-label="Eyes">👀</button>
+              <button type="button" data-emoji="💀" aria-label="Skull">💀</button>
+            </div>
+            <div id="chat-gif-panel" class="chat-gif-panel" hidden>
+              <form id="chat-gif-search" class="chat-gif-search">
+                <label class="visually-hidden" for="chat-gif-query">Search GIFs</label>
+                <input id="chat-gif-query" type="search" maxlength="80" placeholder="Search GIFs..." />
+                <button type="submit">Search</button>
+              </form>
+              <p id="chat-gif-status" class="chat-gif-status" role="status" aria-live="polite"></p>
+              <div id="chat-gif-results" class="chat-gif-results" aria-label="GIF search results"></div>
+              <a class="chat-klipy-attribution" href="https://klipy.com/" target="_blank" rel="noopener noreferrer">GIFs powered by KLIPY</a>
+            </div>
+          </section>
+          <input id="chat-image-input" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/gif,image/webp" />
+          <p id="chat-attachment-name" class="chat-attachment-name" hidden></p>
           <label class="visually-hidden" for="chat-message-input">Message in chat room</label>
           <input
             id="chat-message-input"
@@ -69,8 +106,12 @@
             maxlength="1000"
             placeholder="Write a message..."
             autocomplete="off"
-            required
           />
+          <div class="chat-composer-tools" aria-label="Message tools">
+            <button id="chat-emoji-button" class="chat-tool-button" type="button" aria-label="Choose emoji" title="Emoji">☺</button>
+            <button id="chat-gif-button" class="chat-tool-button chat-gif-button" type="button" aria-label="Search GIFs" title="GIF">GIF</button>
+            <button id="chat-image-button" class="chat-tool-button" type="button" aria-label="Attach image" title="Attach image">▧</button>
+          </div>
           <button class="chat-send-button" type="submit">Send</button>
         </form>
       </section>

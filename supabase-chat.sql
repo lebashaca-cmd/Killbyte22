@@ -8,6 +8,16 @@ create table if not exists public.chat_messages (
 );
 
 alter table public.chat_messages
+  add column if not exists message_type text not null default 'text',
+  add column if not exists media_url text not null default '',
+  add column if not exists media_path text not null default '';
+
+alter table public.chat_messages
+  drop constraint if exists chat_messages_message_type_check,
+  add constraint chat_messages_message_type_check
+    check (message_type in ('text', 'image', 'gif'));
+
+alter table public.chat_messages
   add column if not exists user_id uuid references auth.users (id) on delete cascade;
 
 create table if not exists public.user_profiles (
@@ -172,6 +182,76 @@ create policy "Users can replace their own profile images"
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'killbyte-chat-images',
+  'killbyte-chat-images',
+  false,
+  5242880,
+  array['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+)
+on conflict (id) do update
+set public = excluded.public,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "Signed-in users can upload chat images" on storage.objects;
+create policy "Signed-in users can upload chat images"
+  on storage.objects
+  for insert
+  to authenticated
+  with check (
+    bucket_id = 'killbyte-chat-images'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+drop policy if exists "Signed-in users can view chat images" on storage.objects;
+create policy "Signed-in users can view chat images"
+  on storage.objects
+  for select
+  to authenticated
+  using (bucket_id = 'killbyte-chat-images'  );
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'killbyte-chat-images',
+  'killbyte-chat-images',
+  false,
+  5242880,
+  array['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+)
+on conflict (id) do update
+set public = excluded.public,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "Signed-in users can upload chat images" on storage.objects;
+create policy "Signed-in users can upload chat images"
+  on storage.objects
+  for insert
+  to authenticated
+  with check (
+    bucket_id = 'killbyte-chat-images'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+drop policy if exists "Signed-in users can view chat images" on storage.objects;
+create policy "Signed-in users can view chat images"
+  on storage.objects
+  for select
+  to authenticated
+  using (bucket_id = 'killbyte-chat-images');
+
+drop policy if exists "Users can remove their own chat images" on storage.objects;
+create policy "Users can remove their own chat images"
+  on storage.objects
+  for delete
+  to authenticated
+  using (
+    bucket_id = 'killbyte-chat-images'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
 drop policy if exists "Signed-in users can read chat messages" on public.chat_messages;
 create policy "Signed-in users can read chat messages"
   on public.chat_messages
@@ -186,6 +266,20 @@ create policy "Users can post as their own account"
   to authenticated
   with check (
     auth.uid() = user_id
+    and message_type in ('text', 'image', 'gif')
+    and (
+      (message_type = 'text' and media_url = '' and media_path = '')
+      or (
+        message_type = 'image'
+        and media_url = ''
+        and media_path like auth.uid()::text || '/%'
+      )
+      or (
+        message_type = 'gif'
+        and media_path = ''
+        and media_url ~ '^https://([a-z0-9-]+\.)?klipy\.com/'
+      )
+    )
     and username = left(
       coalesce(
         nullif(btrim(auth.jwt() -> 'user_metadata' ->> 'display_name'), ''),
