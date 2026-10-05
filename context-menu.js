@@ -36,7 +36,7 @@
 
     event.preventDefault();
     activeLink = event.target.closest("a[href]");
-    const chatMessage = event.target.closest(".chat-message[data-message-id][data-own='true']");
+    const chatMessage = event.target.closest(".chat-message[data-message-id]");
     menu.replaceChildren();
     addItem("←  Go back", () => history.back());
     addItem("↻  Reload page", () => location.reload());
@@ -50,11 +50,26 @@
     if (chatMessage) {
       const messageId = chatMessage.dataset.messageId;
       addSeparator();
-      addItem("Delete message", () => {
-        document.dispatchEvent(new CustomEvent("killbyte:deleteChatMessage", {
-          detail: { messageId }
+      addItem("Reply to message", () => {
+        document.dispatchEvent(new CustomEvent("killbyte:chatMessageAction", {
+          detail: { messageId, action: "reply" }
         }));
       });
+      ["👍", "❤️", "😂", "😮", "😢", "🔥"].forEach((emoji) => {
+        addItem(`React with ${emoji}`, () => {
+          document.dispatchEvent(new CustomEvent("killbyte:chatMessageAction", {
+            detail: { messageId, action: "reaction", emoji }
+          }));
+        });
+      });
+      if (chatMessage.dataset.own === "true") {
+        addSeparator();
+        addItem("Delete message", () => {
+          document.dispatchEvent(new CustomEvent("killbyte:deleteChatMessage", {
+            detail: { messageId }
+          }));
+        });
+      }
     }
     if (activeLink) {
       addSeparator();

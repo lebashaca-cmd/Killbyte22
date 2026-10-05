@@ -434,57 +434,24 @@
         item.appendChild(body);
       }
 
-      const messageActions = document.createElement("div");
-      messageActions.className = "chat-message-actions";
-      const replyButton = document.createElement("button");
-      replyButton.type = "button";
-      replyButton.className = "chat-message-action";
-      replyButton.dataset.action = "reply";
-      replyButton.textContent = "Reply";
-      messageActions.appendChild(replyButton);
-
       const reactionGroups = new Map();
       reactions.forEach((reaction) => {
         if (String(reaction.message_id) !== String(message.id)) return;
         const group = reactionGroups.get(reaction.emoji) || { count: 0, reacted: false };
         group.count += 1;
-        group.reacted ||= reaction.user_id === activeUserId;
         reactionGroups.set(reaction.emoji, group);
       });
-      reactionGroups.forEach((group, emoji) => {
-        const reactionButton = document.createElement("button");
-        reactionButton.type = "button";
-        reactionButton.className = "chat-reaction-chip";
-        reactionButton.dataset.action = "toggle-reaction";
-        reactionButton.dataset.emoji = emoji;
-        reactionButton.setAttribute("aria-pressed", String(group.reacted));
-        reactionButton.setAttribute("aria-label", `${emoji} reaction, ${group.count} ${group.count === 1 ? "person" : "people"}`);
-        reactionButton.textContent = `${emoji} ${group.count}`;
-        messageActions.appendChild(reactionButton);
-      });
-
-      const reactionPicker = document.createElement("div");
-      reactionPicker.className = "chat-reaction-picker";
-      reactionPicker.hidden = true;
-      reactionEmojis.forEach((emoji) => {
-        const reactionButton = document.createElement("button");
-        reactionButton.type = "button";
-        reactionButton.className = "chat-reaction-option";
-        reactionButton.dataset.action = "toggle-reaction";
-        reactionButton.dataset.emoji = emoji;
-        reactionButton.setAttribute("aria-label", `React with ${emoji}`);
-        reactionButton.textContent = emoji;
-        reactionPicker.appendChild(reactionButton);
-      });
-
-      const reactionPickerButton = document.createElement("button");
-      reactionPickerButton.type = "button";
-      reactionPickerButton.className = "chat-message-action";
-      reactionPickerButton.dataset.action = "toggle-reaction-picker";
-      reactionPickerButton.setAttribute("aria-expanded", "false");
-      reactionPickerButton.textContent = "React";
-      messageActions.append(reactionPickerButton, reactionPicker);
-      item.appendChild(messageActions);
+      if (reactionGroups.size) {
+        const reactionSummary = document.createElement("div");
+        reactionSummary.className = "chat-reaction-summary";
+        reactionGroups.forEach((group, emoji) => {
+          const reaction = document.createElement("span");
+          reaction.textContent = `${emoji} ${group.count}`;
+          reaction.setAttribute("aria-label", `${emoji}, ${group.count} ${group.count === 1 ? "reaction" : "reactions"}`);
+          reactionSummary.appendChild(reaction);
+        });
+        item.appendChild(reactionSummary);
+      }
       messagesList.appendChild(item);
     });
 
@@ -824,24 +791,13 @@
     }
   };
   const onMessageAction = (event) => {
-    const button = event.target.closest("[data-action]");
-    if (!button) return;
-    const item = button.closest(".chat-message");
-    if (!item) return;
-    if (button.dataset.action === "toggle-reaction-picker") {
-      const reactionPicker = item.querySelector(".chat-reaction-picker");
-      reactionPicker.hidden = !reactionPicker.hidden;
-      button.setAttribute("aria-expanded", String(!reactionPicker.hidden));
-      return;
-    }
-    if (button.dataset.action === "reply") {
-      const message = [...messages.values()]
-        .find((entry) => String(entry.id) === item.dataset.messageId);
-      if (message) setReplyTarget(message);
-      return;
-    }
-    if (button.dataset.action === "toggle-reaction" && button.dataset.emoji) {
-      void toggleReaction(item.dataset.messageId, button.dataset.emoji);
+    const { messageId, action, emoji } = event.detail || {};
+    const message = [...messages.values()]
+      .find((entry) => String(entry.id) === String(messageId));
+    if (!message) return;
+    if (action === "reply") setReplyTarget(message);
+    else if (action === "reaction" && reactionEmojis.includes(emoji)) {
+      void toggleReaction(message.id, emoji);
     }
   };
   const onDeleteChatMessage = (event) => {
@@ -933,6 +889,7 @@
     disposed = true;
     window.removeEventListener("killbyte:beforeNavigate", onBeforeNavigate);
     document.removeEventListener("killbyte:deleteChatMessage", onDeleteChatMessage);
+    document.removeEventListener("killbyte:chatMessageAction", onMessageAction);
     document.removeEventListener("keydown", onKeyDown);
     composer.removeEventListener("submit", onSendMessage);
     picker.querySelector("#chat-picker-close").removeEventListener("click", hidePicker);
@@ -957,6 +914,7 @@
   window.killbyteChatCleanup = cleanup;
   window.addEventListener("killbyte:beforeNavigate", onBeforeNavigate);
   document.addEventListener("killbyte:deleteChatMessage", onDeleteChatMessage);
+  document.addEventListener("killbyte:chatMessageAction", onMessageAction);
   composer.addEventListener("submit", onSendMessage);
   const onEmojiButtonClick = () => showPicker("emoji");
   const onGifButtonClick = () => showPicker("gif");
@@ -974,7 +932,6 @@
   gifQuery.addEventListener("keydown", onGifSearchKeyDown);
   document.addEventListener("keydown", onKeyDown);
   messagesList.addEventListener("click", onAuthorClick);
-  messagesList.addEventListener("click", onMessageAction);
   replyCancelButton.addEventListener("click", clearReply);
   profileDialog?.querySelector(".user-profile-close").addEventListener("click", onCloseProfile);
   profileDialog?.addEventListener("click", onProfileBackdropClick);
