@@ -28,7 +28,7 @@ Use `'admin'`, `'beta'`, or `'member'` to assign another tag. Always use `public
 
 ## Site lockdown
 
-After applying the updated SQL, admins and owners can enable the site-wide four-digit visual gate and set or change its code from the Admin panel. The code is stored in a table that browser clients cannot read directly; database functions expose only the enabled state and verify submitted codes. The authenticated Admin panel remains available to admins and owners for recovery.
+After applying the updated SQL, admins and owners can enable the site-wide four-digit visual gate and set or change its code from the Admin panel. The SQL notifies PostgREST to reload its schema cache after creating the database functions. If the Admin panel reports that it cannot find a lockdown function, rerun the updated SQL in the Supabase SQL Editor and retry after it completes. The code is stored in a table that browser clients cannot read directly; database functions expose only the enabled state and verify submitted codes. The authenticated Admin panel remains available to admins and owners for recovery.
 
 This overlay is a convenience gate, not a security boundary: the site is static, so page assets and public files are not protected by it. Do not use it to protect sensitive information or replace real authentication and server-side authorization.
 

@@ -43,7 +43,10 @@
         : "Lockdown is disabled.");
     } catch (error) {
       console.error("Could not save site lockdown settings.", error);
-      showStatus(`Could not save lockdown settings: ${error.message || "Check your connection."}`, true);
+      const message = error.code === "PGRST202"
+        ? "Supabase cannot see the lockdown save function yet. Run the updated supabase-chat.sql in the Supabase SQL Editor, then retry."
+        : `Could not save lockdown settings: ${error.message || "Check your connection."}`;
+      showStatus(message, true);
     } finally {
       lockdownSaveButton.disabled = false;
     }

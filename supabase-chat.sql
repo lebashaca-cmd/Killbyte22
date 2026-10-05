@@ -464,3 +464,5 @@ revoke all on function public.set_site_lockdown(boolean, text) from public;
 grant execute on function public.get_site_lockdown_state() to anon, authenticated;
 grant execute on function public.verify_site_lockdown_code(text, bigint) to anon, authenticated;
 grant execute on function public.set_site_lockdown(boolean, text) to authenticated;
+
+notify pgrst, 'reload schema';

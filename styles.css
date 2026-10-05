@@ -103,7 +103,7 @@ body.theme-media {
   pointer-events: none;
 }
 
-body > :not(.background-layer):not(.page-nav):not(.context-menu):not(.battery-indicator):not(.clock-indicator) {
+body > :not(.background-layer):not(.page-nav):not(.context-menu):not(.battery-indicator):not(.clock-indicator):not(.site-lockdown-overlay) {
   position: relative;
   z-index: 1;
 }
