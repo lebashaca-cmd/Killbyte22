@@ -1814,6 +1814,7 @@ iframe {
 }
 
 .chat-message {
+  position: relative;
   align-self: flex-start;
   width: fit-content;
   max-width: min(80%, 620px);
@@ -2106,6 +2107,49 @@ iframe {
   background: rgb(8 9 20 / 60%);
   color: color-mix(in srgb, var(--neon-light) 80%, white);
   font-size: 0.78rem;
+}
+
+.chat-reaction-picker {
+  position: absolute;
+  z-index: 2;
+  top: calc(100% + 5px);
+  left: 0;
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  border: 1px solid color-mix(in srgb, var(--neon-light) 45%, transparent);
+  border-radius: 10px;
+  background: #080914;
+  box-shadow: 0 8px 22px rgb(0 0 0 / 55%);
+}
+
+.chat-message[data-own="true"] .chat-reaction-picker {
+  right: 0;
+  left: auto;
+}
+
+.chat-reaction-picker[hidden] {
+  display: none;
+}
+
+.chat-reaction-option {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: white;
+  font: inherit;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.chat-reaction-option:hover,
+.chat-reaction-option:focus-visible {
+  background: color-mix(in srgb, var(--neon-color) 30%, #101126);
+  outline: 1px solid var(--neon-light);
 }
 
 .chat-reply-preview {

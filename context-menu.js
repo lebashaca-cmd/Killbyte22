@@ -55,12 +55,10 @@
           detail: { messageId, action: "reply" }
         }));
       });
-      ["👍", "❤️", "😂", "😮", "😢", "🔥"].forEach((emoji) => {
-        addItem(`React with ${emoji}`, () => {
-          document.dispatchEvent(new CustomEvent("killbyte:chatMessageAction", {
-            detail: { messageId, action: "reaction", emoji }
-          }));
-        });
+      addItem("React", () => {
+        document.dispatchEvent(new CustomEvent("killbyte:chatMessageAction", {
+          detail: { messageId, action: "open-reaction-picker" }
+        }));
       });
       if (chatMessage.dataset.own === "true") {
         addSeparator();

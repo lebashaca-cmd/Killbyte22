@@ -437,7 +437,7 @@
       const reactionGroups = new Map();
       reactions.forEach((reaction) => {
         if (String(reaction.message_id) !== String(message.id)) return;
-        const group = reactionGroups.get(reaction.emoji) || { count: 0, reacted: false };
+        const group = reactionGroups.get(reaction.emoji) || { count: 0 };
         group.count += 1;
         reactionGroups.set(reaction.emoji, group);
       });
@@ -452,6 +452,21 @@
         });
         item.appendChild(reactionSummary);
       }
+
+      const reactionPicker = document.createElement("div");
+      reactionPicker.className = "chat-reaction-picker";
+      reactionPicker.setAttribute("aria-label", "Choose a reaction");
+      reactionPicker.hidden = true;
+      reactionEmojis.forEach((emoji) => {
+        const reactionButton = document.createElement("button");
+        reactionButton.type = "button";
+        reactionButton.className = "chat-reaction-option";
+        reactionButton.dataset.emoji = emoji;
+        reactionButton.setAttribute("aria-label", `React with ${emoji}`);
+        reactionButton.textContent = emoji;
+        reactionPicker.appendChild(reactionButton);
+      });
+      item.appendChild(reactionPicker);
       messagesList.appendChild(item);
     });
 
@@ -791,13 +806,37 @@
     }
   };
   const onMessageAction = (event) => {
-    const { messageId, action, emoji } = event.detail || {};
+    const { messageId, action } = event.detail || {};
     const message = [...messages.values()]
       .find((entry) => String(entry.id) === String(messageId));
     if (!message) return;
     if (action === "reply") setReplyTarget(message);
-    else if (action === "reaction" && reactionEmojis.includes(emoji)) {
-      void toggleReaction(message.id, emoji);
+    else if (action === "open-reaction-picker") {
+      const messageItem = [...messagesList.querySelectorAll(".chat-message[data-message-id]")]
+        .find((item) => item.dataset.messageId === String(message.id));
+      if (!messageItem) return;
+      const picker = messageItem.querySelector(".chat-reaction-picker");
+      const shouldOpen = picker.hidden;
+      messagesList.querySelectorAll(".chat-reaction-picker").forEach((item) => {
+        item.hidden = true;
+      });
+      picker.hidden = !shouldOpen;
+    }
+  };
+  const onReactionPickerClick = (event) => {
+    const button = event.target.closest(".chat-reaction-option[data-emoji]");
+    const messageItem = button?.closest(".chat-message[data-message-id]");
+    if (!button || !messageItem || !reactionEmojis.includes(button.dataset.emoji)) return;
+    const picker = messageItem.querySelector(".chat-reaction-picker");
+    picker.hidden = true;
+    void toggleReaction(messageItem.dataset.messageId, button.dataset.emoji);
+  };
+  const onReactionPickerKeyDown = (event) => {
+    if (event.key !== "Escape") return;
+    const openPicker = messagesList.querySelector(".chat-reaction-picker:not([hidden])");
+    if (openPicker) {
+      openPicker.hidden = true;
+      event.stopPropagation();
     }
   };
   const onDeleteChatMessage = (event) => {
@@ -890,6 +929,7 @@
     window.removeEventListener("killbyte:beforeNavigate", onBeforeNavigate);
     document.removeEventListener("killbyte:deleteChatMessage", onDeleteChatMessage);
     document.removeEventListener("killbyte:chatMessageAction", onMessageAction);
+    document.removeEventListener("keydown", onReactionPickerKeyDown);
     document.removeEventListener("keydown", onKeyDown);
     composer.removeEventListener("submit", onSendMessage);
     picker.querySelector("#chat-picker-close").removeEventListener("click", hidePicker);
@@ -901,7 +941,7 @@
     gifSearchButton.removeEventListener("click", runGifSearch);
     gifQuery.removeEventListener("keydown", onGifSearchKeyDown);
     messagesList.removeEventListener("click", onAuthorClick);
-    messagesList.removeEventListener("click", onMessageAction);
+    messagesList.removeEventListener("click", onReactionPickerClick);
     replyCancelButton.removeEventListener("click", clearReply);
     profileDialog?.querySelector(".user-profile-close").removeEventListener("click", onCloseProfile);
     profileDialog?.removeEventListener("click", onProfileBackdropClick);
@@ -915,6 +955,7 @@
   window.addEventListener("killbyte:beforeNavigate", onBeforeNavigate);
   document.addEventListener("killbyte:deleteChatMessage", onDeleteChatMessage);
   document.addEventListener("killbyte:chatMessageAction", onMessageAction);
+  document.addEventListener("keydown", onReactionPickerKeyDown);
   composer.addEventListener("submit", onSendMessage);
   const onEmojiButtonClick = () => showPicker("emoji");
   const onGifButtonClick = () => showPicker("gif");
@@ -932,6 +973,7 @@
   gifQuery.addEventListener("keydown", onGifSearchKeyDown);
   document.addEventListener("keydown", onKeyDown);
   messagesList.addEventListener("click", onAuthorClick);
+  messagesList.addEventListener("click", onReactionPickerClick);
   replyCancelButton.addEventListener("click", clearReply);
   profileDialog?.querySelector(".user-profile-close").addEventListener("click", onCloseProfile);
   profileDialog?.addEventListener("click", onProfileBackdropClick);
