@@ -10,7 +10,34 @@ create table if not exists public.chat_messages (
 alter table public.chat_messages
   add column if not exists message_type text not null default 'text',
   add column if not exists media_url text not null default '',
-  add column if not exists media_path text not null default '';
+  add column if not exists media_path text not null default '',
+  add column if not exists parent_message_id bigint;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'chat_messages_parent_message_id_fkey'
+      and conrelid = 'public.chat_messages'::regclass
+  ) then
+    alter table public.chat_messages
+      add constraint chat_messages_parent_message_id_fkey
+      foreign key (parent_message_id) references public.chat_messages (id) on delete set null;
+  end if;
+end;
+$$;
+
+create table if not exists public.chat_message_reactions (
+  message_id bigint not null references public.chat_messages (id) on delete cascade,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  emoji text not null check (char_length(emoji) between 1 and 16),
+  created_at timestamptz not null default now(),
+  primary key (message_id, user_id, emoji)
+);
+
+create index if not exists chat_message_reactions_message_id_idx
+  on public.chat_message_reactions (message_id);
 
 alter table public.chat_messages
   drop constraint if exists chat_messages_message_type_check,
@@ -94,6 +121,7 @@ create index if not exists chat_messages_room_created_at_idx
   on public.chat_messages (room, created_at desc);
 
 alter table public.chat_messages enable row level security;
+alter table public.chat_message_reactions enable row level security;
 alter table public.user_profiles enable row level security;
 alter table public.user_roles enable row level security;
 alter table public.user_role_assignments enable row level security;
@@ -288,11 +316,51 @@ create policy "Users can post as their own account"
       ),
       32
     )
+    and (
+      parent_message_id is null
+      or exists (
+        select 1
+        from public.chat_messages parent_message
+        where parent_message.id = chat_messages.parent_message_id
+          and parent_message.room = chat_messages.room
+      )
+    )
   );
 
 drop policy if exists "Users can delete their own chat messages" on public.chat_messages;
 create policy "Users can delete their own chat messages"
   on public.chat_messages
+  for delete
+  to authenticated
+  using (auth.uid() = user_id);
+
+revoke all on public.chat_message_reactions from anon, authenticated;
+grant select, insert, delete on public.chat_message_reactions to authenticated;
+
+drop policy if exists "Signed-in users can read chat message reactions" on public.chat_message_reactions;
+create policy "Signed-in users can read chat message reactions"
+  on public.chat_message_reactions
+  for select
+  to authenticated
+  using (true);
+
+drop policy if exists "Users can add their own chat message reactions" on public.chat_message_reactions;
+create policy "Users can add their own chat message reactions"
+  on public.chat_message_reactions
+  for insert
+  to authenticated
+  with check (
+    auth.uid() = user_id
+    and exists (
+      select 1
+      from public.chat_messages target_message
+      where target_message.id = chat_message_reactions.message_id
+    )
+  );
+
+drop policy if exists "Users can remove their own chat message reactions" on public.chat_message_reactions;
+create policy "Users can remove their own chat message reactions"
+  on public.chat_message_reactions
   for delete
   to authenticated
   using (auth.uid() = user_id);

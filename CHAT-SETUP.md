@@ -10,7 +10,7 @@ Set `KILLBYTE_SUPABASE_URL` and `KILLBYTE_SUPABASE_ANON_KEY` in [chat-config.js]
 
 ## 2. Create the chat table and access policies
 
-Open the Supabase SQL Editor and run the contents of [supabase-chat.sql](./supabase-chat.sql). This creates or upgrades the messages, public profile, and role tables, automatically assigns the Member role to new signups, sets up public profile-image storage and private chat-image storage (JPEG, PNG, GIF, or WebP up to 5 MB), and adds columns for text, image, and GIF messages. It also adds the room column (existing messages stay in `#general`), enables row-level security, lets signed-in users read messages, profiles, and role labels, and only lets users manage their own profiles or post as their own account name. Users may delete only their own chat messages. Users can have multiple role tags. Roles cannot be assigned from the browser; assign additional roles in the SQL Editor. Existing accounts can add profile details from the Account page. The SQL is safe to rerun on an existing chat table.
+Open the Supabase SQL Editor and run the contents of [supabase-chat.sql](./supabase-chat.sql). This creates or upgrades the messages, message reactions, public profile, and role tables, automatically assigns the Member role to new signups, sets up public profile-image storage and private chat-image storage (JPEG, PNG, GIF, or WebP up to 5 MB), and adds columns for text, image, GIF, and threaded replies. It also adds the room column (existing messages stay in `#general`), enables row-level security, lets signed-in users read messages, reactions, profiles, and role labels, and only lets users manage their own profiles or post as their own account name. Users may delete only their own chat messages and reactions. Users can have multiple role tags. Roles cannot be assigned from the browser; assign additional roles in the SQL Editor. Existing accounts can add profile details from the Account page. The SQL is safe to rerun on an existing chat table.
 
 ## 3. Configure KLIPY GIF search
 
@@ -33,7 +33,7 @@ where user_id = 'YOUR_AUTH_USER_UUID' and role = 'owner';
 
 ## 4. Enable live message updates
 
-In Supabase, open **Database → Publications**, select `supabase_realtime`, and enable `public.chat_messages`. The initial message history will load without this step, but the room will not receive live updates.
+In Supabase, open **Database → Publications**, select `supabase_realtime`, and enable both `public.chat_messages` and `public.chat_message_reactions`. Initial message history and reactions will load without this step, but new messages, replies, and reactions will not update live.
 
 ## 5. Configure account email redirects
 

@@ -8,6 +8,9 @@
   const messagesList = document.getElementById("chat-messages");
   const composer = document.getElementById("chat-composer");
   const messageInput = document.getElementById("chat-message-input");
+  const replyPreview = document.getElementById("chat-reply-preview");
+  const replyPreviewText = document.getElementById("chat-reply-preview-text");
+  const replyCancelButton = document.getElementById("chat-reply-cancel");
   const picker = document.getElementById("chat-composer-picker");
   const emojiButton = document.getElementById("chat-emoji-button");
   const gifButton = document.getElementById("chat-gif-button");
@@ -30,6 +33,9 @@
   let activeRoom = "general";
   let roomRequestId = 0;
   let messages = new Map();
+  let reactions = new Map();
+  let replyingToId = null;
+  let pendingReactions = new Set();
   let profileCache = new Map();
   let roleCache = new Map();
   let profilesLoading = new Map();
@@ -47,6 +53,46 @@
     status.textContent = message;
     status.dataset.error = String(isError);
     status.hidden = !message;
+  };
+
+  const reactionEmojis = ["👍", "❤️", "😂", "😮", "😢", "🔥"];
+  const getReactionKey = (messageId, userId, emoji) => `${messageId}:${userId}:${emoji}`;
+  const getMessageSummary = (message) => {
+    if (!message) return "Earlier message";
+    if (message.message_type === "image") return message.content && message.content !== "[Image]" ? message.content : "Image";
+    if (message.message_type === "gif") return message.content && message.content !== "[GIF]" ? message.content : "GIF";
+    return message.content;
+  };
+  const clearReply = () => {
+    replyingToId = null;
+    replyPreview.hidden = true;
+    replyPreviewText.textContent = "";
+  };
+  const setReplyTarget = (message) => {
+    replyingToId = message.id;
+    const profile = profileCache.get(message.user_id);
+    replyPreviewText.textContent = `Replying to ${profile?.display_name || message.username}: ${getMessageSummary(message)}`;
+    replyPreview.hidden = false;
+    messageInput.focus();
+  };
+
+  const loadReactions = async (messageIds) => {
+    if (!messageIds.length) return;
+    const { data, error } = await client
+      .from("chat_message_reactions")
+      .select("message_id, user_id, emoji")
+      .in("message_id", messageIds);
+    if (error) {
+      console.error("Could not load chat message reactions.", error);
+      showStatus("Message reactions could not be loaded. Check the chat SQL setup and try again.", true);
+      return;
+    }
+    if (disposed) return;
+    reactions = new Map(data.map((reaction) => [
+      getReactionKey(reaction.message_id, reaction.user_id, reaction.emoji),
+      reaction
+    ]));
+    renderMessages();
   };
 
   const getDisplayName = (user) => {
@@ -336,6 +382,18 @@
       time.dateTime = createdAt.toISOString();
       time.textContent = createdAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
       metadata.append(author, time);
+      item.appendChild(metadata);
+
+      if (message.parent_message_id) {
+        const parentMessage = [...messages.values()]
+          .find((entry) => String(entry.id) === String(message.parent_message_id));
+        const replyContext = document.createElement("blockquote");
+        replyContext.className = "chat-message-reply-context";
+        replyContext.textContent = parentMessage
+          ? `${parentMessage.username}: ${getMessageSummary(parentMessage)}`
+          : "Reply to an earlier message";
+        item.appendChild(replyContext);
+      }
 
       if (message.message_type === "image" || message.message_type === "gif") {
         const mediaUrl = message.message_type === "gif"
@@ -347,7 +405,7 @@
           media.src = mediaUrl;
           media.alt = message.message_type === "gif" ? "GIF shared in chat" : "Image shared in chat";
           media.loading = "lazy";
-          item.append(metadata, media);
+          item.appendChild(media);
           if (message.content && message.content !== "[Image]" && message.content !== "[GIF]") {
             const caption = document.createElement("p");
             caption.className = "chat-message-caption";
@@ -367,14 +425,66 @@
           const loadingText = document.createElement("p");
           loadingText.className = "chat-media-loading";
           loadingText.textContent = message.message_type === "gif" ? "GIF unavailable" : "Loading image…";
-          item.append(metadata, loadingText);
+          item.appendChild(loadingText);
           if (message.message_type === "image") void loadSignedMediaUrl(message.media_path);
         }
       } else {
         const body = document.createElement("p");
         body.textContent = message.content;
-        item.append(metadata, body);
+        item.appendChild(body);
       }
+
+      const messageActions = document.createElement("div");
+      messageActions.className = "chat-message-actions";
+      const replyButton = document.createElement("button");
+      replyButton.type = "button";
+      replyButton.className = "chat-message-action";
+      replyButton.dataset.action = "reply";
+      replyButton.textContent = "Reply";
+      messageActions.appendChild(replyButton);
+
+      const reactionGroups = new Map();
+      reactions.forEach((reaction) => {
+        if (String(reaction.message_id) !== String(message.id)) return;
+        const group = reactionGroups.get(reaction.emoji) || { count: 0, reacted: false };
+        group.count += 1;
+        group.reacted ||= reaction.user_id === activeUserId;
+        reactionGroups.set(reaction.emoji, group);
+      });
+      reactionGroups.forEach((group, emoji) => {
+        const reactionButton = document.createElement("button");
+        reactionButton.type = "button";
+        reactionButton.className = "chat-reaction-chip";
+        reactionButton.dataset.action = "toggle-reaction";
+        reactionButton.dataset.emoji = emoji;
+        reactionButton.setAttribute("aria-pressed", String(group.reacted));
+        reactionButton.setAttribute("aria-label", `${emoji} reaction, ${group.count} ${group.count === 1 ? "person" : "people"}`);
+        reactionButton.textContent = `${emoji} ${group.count}`;
+        messageActions.appendChild(reactionButton);
+      });
+
+      const reactionPicker = document.createElement("div");
+      reactionPicker.className = "chat-reaction-picker";
+      reactionPicker.hidden = true;
+      reactionEmojis.forEach((emoji) => {
+        const reactionButton = document.createElement("button");
+        reactionButton.type = "button";
+        reactionButton.className = "chat-reaction-option";
+        reactionButton.dataset.action = "toggle-reaction";
+        reactionButton.dataset.emoji = emoji;
+        reactionButton.setAttribute("aria-label", `React with ${emoji}`);
+        reactionButton.textContent = emoji;
+        reactionPicker.appendChild(reactionButton);
+      });
+
+      const reactionPickerButton = document.createElement("button");
+      reactionPickerButton.type = "button";
+      reactionPickerButton.className = "chat-message-action";
+      reactionPickerButton.dataset.action = "toggle-reaction-picker";
+      reactionPickerButton.setAttribute("aria-expanded", "false");
+      reactionPickerButton.textContent = "React";
+      messageActions.append(reactionPickerButton, reactionPicker);
+      item.appendChild(messageActions);
       messagesList.appendChild(item);
     });
 
@@ -404,6 +514,9 @@
       profilesLoading = new Map();
       signedMediaUrls = new Map();
       mediaLoading = new Map();
+      reactions = new Map();
+      pendingReactions = new Set();
+      clearReply();
       renderMessages();
     }
 
@@ -433,6 +546,23 @@
             .find((entry) => String(entry.id) === String(deletedMessage.id));
           if (!message) return;
           messages.delete(message.id);
+          reactions.forEach((reaction, key) => {
+            if (String(reaction.message_id) === String(message.id)) reactions.delete(key);
+          });
+          if (String(replyingToId) === String(message.id)) clearReply();
+          renderMessages();
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "chat_message_reactions" },
+        (payload) => {
+          if (disposed || activeRoom !== room) return;
+          const reaction = payload.eventType === "DELETE" ? payload.old : payload.new;
+          if (!reaction?.message_id || !messages.has(Number(reaction.message_id))) return;
+          const key = getReactionKey(reaction.message_id, reaction.user_id, reaction.emoji);
+          if (payload.eventType === "DELETE") reactions.delete(key);
+          else reactions.set(key, reaction);
           renderMessages();
         }
       )
@@ -446,7 +576,7 @@
 
     const { data, error } = await client
       .from("chat_messages")
-      .select("id, user_id, username, content, room, created_at, message_type, media_url, media_path")
+      .select("id, user_id, username, content, room, created_at, message_type, media_url, media_path, parent_message_id")
       .eq("room", room)
       .order("created_at", { ascending: false })
       .limit(100);
@@ -459,12 +589,16 @@
 
     data.reverse().forEach((message) => messages.set(message.id, message));
     renderMessages();
+    await loadReactions(data.map((message) => message.id));
   };
 
   const clearSession = async () => {
     await stopRealtime();
     activeUserId = null;
     messages = new Map();
+    reactions = new Map();
+    pendingReactions = new Set();
+    clearReply();
     attachedImage = null;
     attachedGifUrl = "";
     imageInput.value = "";
@@ -479,6 +613,7 @@
     const content = messageInput.value.trim();
     if ((!content && !attachedImage && !attachedGifUrl) || !activeUserId) return;
     const room = activeRoom;
+    const parentMessageId = replyingToId;
 
     let userResult;
     let userError;
@@ -540,15 +675,17 @@
           room,
           message_type: messageType,
           media_url: mediaUrl,
-          media_path: mediaPath
+          media_path: mediaPath,
+          parent_message_id: parentMessageId
         })
-        .select("id, user_id, username, content, room, created_at, message_type, media_url, media_path")
+        .select("id, user_id, username, content, room, created_at, message_type, media_url, media_path, parent_message_id")
         .single();
 
       if (error) throw error;
 
       if (activeRoom === room) {
         messages.set(data.id, data);
+        clearReply();
         renderMessages();
       }
       messageInput.value = "";
@@ -650,6 +787,63 @@
     const author = event.target.closest(".chat-message-author");
     if (author) void showUserProfile(author.dataset.userId, author.dataset.username);
   };
+  const toggleReaction = async (messageId, emoji) => {
+    if (!activeUserId) return;
+    const room = activeRoom;
+    const key = getReactionKey(messageId, activeUserId, emoji);
+    if (pendingReactions.has(key)) return;
+    pendingReactions.add(key);
+    try {
+      const existingReaction = reactions.get(key);
+      if (existingReaction) {
+        const { data, error } = await client
+          .from("chat_message_reactions")
+          .delete()
+          .eq("message_id", messageId)
+          .eq("user_id", activeUserId)
+          .eq("emoji", emoji)
+          .select("message_id, user_id, emoji");
+        if (error) throw error;
+        if (activeRoom === room && data.length) reactions.delete(key);
+        else await loadReactions([...messages.keys()]);
+      } else {
+        const { data, error } = await client
+          .from("chat_message_reactions")
+          .insert({ message_id: messageId, user_id: activeUserId, emoji })
+          .select("message_id, user_id, emoji")
+          .single();
+        if (error) throw error;
+        if (activeRoom === room) reactions.set(key, data);
+      }
+      if (activeRoom === room) renderMessages();
+    } catch (error) {
+      console.error("Could not update the chat message reaction.", error);
+      showStatus(`Could not update reaction: ${error.message || "Check your connection and try again."}`, true);
+    } finally {
+      pendingReactions.delete(key);
+    }
+  };
+  const onMessageAction = (event) => {
+    const button = event.target.closest("[data-action]");
+    if (!button) return;
+    const item = button.closest(".chat-message");
+    if (!item) return;
+    if (button.dataset.action === "toggle-reaction-picker") {
+      const reactionPicker = item.querySelector(".chat-reaction-picker");
+      reactionPicker.hidden = !reactionPicker.hidden;
+      button.setAttribute("aria-expanded", String(!reactionPicker.hidden));
+      return;
+    }
+    if (button.dataset.action === "reply") {
+      const message = [...messages.values()]
+        .find((entry) => String(entry.id) === item.dataset.messageId);
+      if (message) setReplyTarget(message);
+      return;
+    }
+    if (button.dataset.action === "toggle-reaction" && button.dataset.emoji) {
+      void toggleReaction(item.dataset.messageId, button.dataset.emoji);
+    }
+  };
   const onDeleteChatMessage = (event) => {
     const messageId = event.detail?.messageId;
     const message = [...messages.values()]
@@ -672,6 +866,10 @@
       }
 
       messages.delete(message.id);
+      reactions.forEach((reaction, key) => {
+        if (String(reaction.message_id) === String(message.id)) reactions.delete(key);
+      });
+      if (String(replyingToId) === String(message.id)) clearReply();
       renderMessages();
       if (message.message_type === "image" && message.media_path) {
         try {
@@ -707,6 +905,9 @@
     chatPanel.setAttribute("aria-label", `${activeRoom} chat`);
     messageInput.placeholder = `Message #${activeRoom}...`;
     messages = new Map();
+    reactions = new Map();
+    pendingReactions = new Set();
+    clearReply();
     renderMessages();
     showStatus("");
 
@@ -743,6 +944,8 @@
     gifSearchButton.removeEventListener("click", runGifSearch);
     gifQuery.removeEventListener("keydown", onGifSearchKeyDown);
     messagesList.removeEventListener("click", onAuthorClick);
+    messagesList.removeEventListener("click", onMessageAction);
+    replyCancelButton.removeEventListener("click", clearReply);
     profileDialog?.querySelector(".user-profile-close").removeEventListener("click", onCloseProfile);
     profileDialog?.removeEventListener("click", onProfileBackdropClick);
     roomButtons.forEach((button) => button.removeEventListener("click", onRoomSelect));
@@ -771,6 +974,8 @@
   gifQuery.addEventListener("keydown", onGifSearchKeyDown);
   document.addEventListener("keydown", onKeyDown);
   messagesList.addEventListener("click", onAuthorClick);
+  messagesList.addEventListener("click", onMessageAction);
+  replyCancelButton.addEventListener("click", clearReply);
   profileDialog?.querySelector(".user-profile-close").addEventListener("click", onCloseProfile);
   profileDialog?.addEventListener("click", onProfileBackdropClick);
   roomButtons.forEach((button) => button.addEventListener("click", onRoomSelect));

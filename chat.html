@@ -48,7 +48,7 @@
           <li>Set <code>KILLBYTE_SUPABASE_URL</code> and <code>KILLBYTE_SUPABASE_ANON_KEY</code> in <code>chat-config.js</code>.</li>
           <li>Set <code>KILLBYTE_KLIPY_APP_KEY</code> in <code>chat-config.js</code> to enable GIF search.</li>
           <li><a href="supabase-chat.sql" download>Download the chat SQL</a> and run it in the Supabase SQL Editor.</li>
-          <li>Enable Realtime for <code>public.chat_messages</code> using the <a href="CHAT-SETUP.md">setup guide</a>.</li>
+          <li>Enable Realtime for <code>public.chat_messages</code> and <code>public.chat_message_reactions</code> using the <a href="CHAT-SETUP.md">setup guide</a>.</li>
         </ol>
       </section>
 
@@ -61,6 +61,10 @@
       <section id="chat-panel" class="chat-panel" aria-label="Chat room" hidden>
         <ol id="chat-messages" class="chat-messages" aria-live="polite" aria-relevant="additions"></ol>
         <form id="chat-composer" class="chat-composer">
+          <section id="chat-reply-preview" class="chat-reply-preview" aria-live="polite" hidden>
+            <p id="chat-reply-preview-text"></p>
+            <button id="chat-reply-cancel" class="chat-reply-cancel" type="button" aria-label="Cancel reply">&times;</button>
+          </section>
           <section id="chat-composer-picker" class="chat-composer-picker" aria-label="Message tools" hidden>
             <header class="chat-picker-header">
               <h3 id="chat-picker-title">Emoji</h3>
