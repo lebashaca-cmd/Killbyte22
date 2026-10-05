@@ -10,6 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="chat-config.js" defer></script>
     <script src="account.js" defer></script>
+    <script src="lockdown.js" defer></script>
     <script src="navigation.js" defer></script>
     <script src="admin.js" defer></script>
   </head>
@@ -40,6 +41,30 @@
           <p>Owners: <strong id="owner-count">—</strong></p>
         </div>
         <p>Role assignments are managed securely in the Supabase SQL Editor.</p>
+        <section class="admin-lockdown-section" aria-labelledby="admin-lockdown-heading">
+          <h3 id="admin-lockdown-heading">Site lockdown</h3>
+          <p>Show a site-wide access screen that requires a four-digit code. The signed-in admin panel stays available for recovery.</p>
+          <form id="admin-lockdown-form">
+            <label class="admin-lockdown-toggle" for="admin-lockdown-enabled">
+              <input id="admin-lockdown-enabled" type="checkbox" />
+              <span>Enable site lockdown</span>
+            </label>
+            <label for="admin-lockdown-code">New four-digit code <span>(leave blank to keep the current code)</span></label>
+            <input
+              id="admin-lockdown-code"
+              name="code"
+              type="password"
+              inputmode="numeric"
+              autocomplete="new-password"
+              pattern="[0-9]{4}"
+              minlength="4"
+              maxlength="4"
+              aria-describedby="admin-lockdown-help"
+            />
+            <p id="admin-lockdown-help">Enter exactly four digits to set or change the code. This is a visual gate, not protection for public files.</p>
+            <button class="enter-button" type="submit">Save lockdown settings</button>
+          </form>
+        </section>
       </section>
     </main>
   </body>

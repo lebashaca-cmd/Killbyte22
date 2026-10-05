@@ -10,9 +10,11 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="chat-config.js" defer></script>
     <script src="account.js" defer></script>
+    <script src="lockdown.js" defer></script>
     <script src="navigation.js" defer></script>
+    <script src="music.js" defer></script>
   </head>
-  <body class="details-page">
+  <body class="details-page music-page">
     <nav class="page-nav" aria-label="Main navigation">
       <a href="index.html">Home</a>
       <a href="Links.html">Links</a>
@@ -29,7 +31,48 @@
     </nav>
     <main class="box">
       <h1>Music</h1>
-      <p>Music is coming soon.</p>
+      <p>Search for artists, albums, and tracks, then play available previews here.</p>
+      <form id="music-search-form" class="music-search">
+        <label for="music-search-query">Search artists, albums, or tracks</label>
+        <div class="music-form-row">
+          <input id="music-search-query" name="q" type="search" placeholder="What do you want to listen to?" required />
+          <button class="enter-button" type="submit">Search</button>
+        </div>
+      </form>
+      <p id="music-status" class="music-status" role="status" aria-live="polite">
+        Search Apple Music's catalog. Available previews are usually about 30 seconds.
+      </p>
+      <div id="music-results" class="music-results" hidden>
+        <section class="music-result-section" aria-labelledby="music-artists-heading">
+          <h2 id="music-artists-heading">Artists</h2>
+          <div id="music-artists" class="music-artist-results"></div>
+        </section>
+        <section class="music-result-section" aria-labelledby="music-albums-heading">
+          <h2 id="music-albums-heading">Albums</h2>
+          <div id="music-albums" class="music-album-results"></div>
+        </section>
+        <section class="music-result-section" aria-labelledby="music-tracks-heading">
+          <h2 id="music-tracks-heading">Tracks</h2>
+          <ol id="music-tracks" class="music-track-results"></ol>
+        </section>
+      </div>
+      <section id="music-now-playing" class="music-now-playing" aria-label="Music player" hidden>
+        <div class="music-now-playing-info">
+          <img id="music-player-image" alt="" />
+          <div>
+            <strong id="music-player-title"></strong>
+            <span id="music-player-artist"></span>
+          </div>
+        </div>
+        <audio id="music-player" controls preload="none">
+          <source id="music-player-source" type="audio/mp4" />
+        </audio>
+        <a id="music-track-link" target="_blank" rel="noopener noreferrer">View in Apple Music</a>
+      </section>
+      <p class="music-attribution">
+        Catalog search provided by
+        <a href="https://developer.apple.com/library/archive/documentation/AudioVideo/Conceptual/iTuneSearchAPI/" target="_blank" rel="noopener noreferrer">Apple</a>.
+      </p>
     </main>
   </body>
 </html>

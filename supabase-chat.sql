@@ -364,3 +364,103 @@ create policy "Users can remove their own chat message reactions"
   for delete
   to authenticated
   using (auth.uid() = user_id);
+
+create table if not exists public.site_lockdown_config (
+  id smallint primary key check (id = 1),
+  enabled boolean not null default false,
+  access_code text check (access_code is null or access_code ~ '^[0-9]{4}$'),
+  revision bigint not null default 1
+);
+
+alter table public.site_lockdown_config enable row level security;
+revoke all on public.site_lockdown_config from anon, authenticated;
+
+create or replace function public.get_site_lockdown_state()
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  state jsonb;
+begin
+  select pg_catalog.jsonb_build_object(
+    'enabled', enabled,
+    'revision', revision
+  )
+  into state
+  from public.site_lockdown_config
+  where id = 1;
+
+  return coalesce(state, pg_catalog.jsonb_build_object('enabled', false, 'revision', 0));
+end;
+$$;
+
+create or replace function public.verify_site_lockdown_code(p_code text, p_revision bigint)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1
+    from public.site_lockdown_config
+    where id = 1
+      and enabled
+      and revision = p_revision
+      and access_code = p_code
+      and p_code ~ '^[0-9]{4}$'
+  );
+$$;
+
+create or replace function public.set_site_lockdown(p_enabled boolean, p_code text default null)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  new_revision bigint;
+begin
+  if auth.uid() is null or not exists (
+    select 1
+    from public.user_role_assignments
+    where user_id = auth.uid()
+      and role in ('admin', 'owner')
+  ) then
+    raise exception 'Only admins and owners can change site lockdown settings';
+  end if;
+
+  if p_code is not null and p_code !~ '^[0-9]{4}$' then
+    raise exception 'The lockdown code must contain exactly four digits';
+  end if;
+
+  if p_enabled and p_code is null and not exists (
+    select 1
+    from public.site_lockdown_config
+    where id = 1
+      and access_code is not null
+  ) then
+    raise exception 'Set a four-digit code before enabling site lockdown';
+  end if;
+
+  insert into public.site_lockdown_config (id, enabled, access_code, revision)
+  values (1, p_enabled, p_code, 1)
+  on conflict (id) do update
+  set enabled = excluded.enabled,
+      access_code = coalesce(excluded.access_code, public.site_lockdown_config.access_code),
+      revision = public.site_lockdown_config.revision + 1
+  returning revision into new_revision;
+
+  return pg_catalog.jsonb_build_object('enabled', p_enabled, 'revision', new_revision);
+end;
+$$;
+
+revoke all on function public.get_site_lockdown_state() from public;
+revoke all on function public.verify_site_lockdown_code(text, bigint) from public;
+revoke all on function public.set_site_lockdown(boolean, text) from public;
+grant execute on function public.get_site_lockdown_state() to anon, authenticated;
+grant execute on function public.verify_site_lockdown_code(text, bigint) to anon, authenticated;
+grant execute on function public.set_site_lockdown(boolean, text) to authenticated;

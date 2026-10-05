@@ -10,7 +10,7 @@ Set `KILLBYTE_SUPABASE_URL` and `KILLBYTE_SUPABASE_ANON_KEY` in [chat-config.js]
 
 ## 2. Create the chat table and access policies
 
-Open the Supabase SQL Editor and run the contents of [supabase-chat.sql](./supabase-chat.sql). This creates or upgrades the messages, message reactions, public profile, and role tables, automatically assigns the Member role to new signups, sets up public profile-image storage and private chat-image storage (JPEG, PNG, GIF, or WebP up to 5 MB), and adds columns for text, image, GIF, and threaded replies. It also adds the room column (existing messages stay in `#general`), enables row-level security, lets signed-in users read messages, reactions, profiles, and role labels, and only lets users manage their own profiles or post as their own account name. Users may delete only their own chat messages and reactions. Users can have multiple role tags. Roles cannot be assigned from the browser; assign additional roles in the SQL Editor. Existing accounts can add profile details from the Account page. The SQL is safe to rerun on an existing chat table.
+Open the Supabase SQL Editor and run the contents of [supabase-chat.sql](./supabase-chat.sql). This creates or upgrades the messages, message reactions, public profile, role, and site-lockdown tables, automatically assigns the Member role to new signups, sets up public profile-image storage and private chat-image storage (JPEG, PNG, GIF, or WebP up to 5 MB), and adds columns for text, image, GIF, and threaded replies. It also adds the room column (existing messages stay in `#general`), enables row-level security, lets signed-in users read messages, reactions, profiles, and role labels, and only lets users manage their own profiles or post as their own account name. Users may delete only their own chat messages and reactions. Users can have multiple role tags. Roles cannot be assigned from the browser; assign additional roles in the SQL Editor. Existing accounts can add profile details from the Account page. The SQL is safe to rerun on an existing chat table.
 
 ## 3. Configure KLIPY GIF search
 
@@ -25,6 +25,12 @@ on conflict (user_id, role) do nothing;
 ```
 
 Use `'admin'`, `'beta'`, or `'member'` to assign another tag. Always use `public.user_role_assignments` for role changes; the old `public.user_roles` table is legacy and only supports `'admin'` and `'owner'`. An account may have multiple role rows. New accounts receive `'member'` automatically. Only `'admin'` and `'owner'` grant access to the Admin panel. To remove an assigned role:
+
+## Site lockdown
+
+After applying the updated SQL, admins and owners can enable the site-wide four-digit visual gate and set or change its code from the Admin panel. The code is stored in a table that browser clients cannot read directly; database functions expose only the enabled state and verify submitted codes. The authenticated Admin panel remains available to admins and owners for recovery.
+
+This overlay is a convenience gate, not a security boundary: the site is static, so page assets and public files are not protected by it. Do not use it to protect sensitive information or replace real authentication and server-side authorization.
 
 ```sql
 delete from public.user_role_assignments
